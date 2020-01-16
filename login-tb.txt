@@ -1,0 +1,50 @@
+来自https://www.cnblogs.com/kalman/p/11521812.html
+
+public void checkAndSetLoginStatus(String lgToken) {
+       Thread thread = new Thread(new Runnable() {
+           @Override
+           public void run() {
+               Map<String, String> params = newHashMap();
+               params.put("defaulturl", "http://login.taobao.com/member/taobaoke/login.htm?is_login=1
+               params.put("lgToken", lgToken);
+               int retryTimes = 1;
+               HttpResponse loginCheckResp =HttpUtil.post("https://qrlogin.taobao.com/qrcodelogin/qrcodeLoginCheck.do null);
+               QRcodeLoginCheck loginCheck =JSON.parseObject(loginCheckResp.getResponse(), QRcodeLoginCheck.class);
+               while (!loginCheck.isLoginSuccess()) {
+                   if(loginCheck.isExpire() || retryTimes++>30){
+                       redisService.set(loginKey, QRCODE_EXPIRED+"");
+                       log.warn("Taobao login QRCode is expire or long time no scan.");
+                       return;
+                   }
+                   ThreadSleep.sleep(1500);
+                   loginCheckResp =HttpUtil.post("https://qrlogin.taobao.com/qrcodelogin/qrcodeLoginCheck.do null);
+                   loginCheck =JSON.parseObject(loginCheckResp.getResponse(), QRcodeLoginCheck.class);
+               }
+
+               HttpResponse httpResponse = HttpUtil.post(loginCheck.getUrl(), loginCheckResp.getCookieStore());
+               while(httpResponse != null && httpResponse.is302Direct()){
+                   String location = httpResponse.getLocaltion();
+                   httpResponse = HttpUtil.post(location, httpResponse.getCookieStore());
+               }
+
+               byte[] data = new JavaSerializer().to(httpResponse.getCookieStore());
+               redisService.set(sessionKey, Base64.encodeBase64String(data));
+           }
+       });
+       thread.setName("TB_Login_Thread");
+       thread.start();
+   }
+
+（无需登录）淘宝天猫优惠券JSON接口1
+   http://uland.taobao.com/cp/coupon_list?pid=mm_43382499_1237850014_109948000102&category=16,0006843&queryCount=500
+
+无需任何开发，简单5步轻松搞定公众号对接淘宝联盟（免费）
+   https://www.cnblogs.com/kalman/p/11546206.html
+
+
+   阿里妈妈推广链接下载
+   
+   https://pub.alimama.com/myunion.htm?spm=a219t.11816994.1998910419.dbb2385cd.5d3375a5uBj385#!/promo/self/items
+
+   搜索转换链接
+   http://www.taobaokeapi.com/doc/taobao.tbk.sc.material.optional.html#%E6%8E%A5%E5%8F%A3%E5%90%8D%E7%A7%B0
