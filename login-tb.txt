@@ -38,7 +38,7 @@ public void checkAndSetLoginStatus(String lgToken) {
 （无需登录）淘宝天猫优惠券JSON接口1
    http://uland.taobao.com/cp/coupon_list?pid=mm_43382499_1237850014_109948000102&category=16,0006843&queryCount=500
 
-无需任何开发，简单5步轻松搞定公众号对接淘宝联盟（免费）
+无需任何开发，简单5步轻松搞定公众号对接淘宝联盟（免费）不准确
    https://www.cnblogs.com/kalman/p/11546206.html
 
 
@@ -48,3 +48,8 @@ public void checkAndSetLoginStatus(String lgToken) {
 
    搜索转换链接
    http://www.taobaokeapi.com/doc/taobao.tbk.sc.material.optional.html#%E6%8E%A5%E5%8F%A3%E5%90%8D%E7%A7%B0
+
+http://www.taobaokeapi.com/doc/api.taobao.tkl2newtkl.html
+
+   ava后台拦截淘口令并解析淘口令中特殊字符的正则
+   String pattern = “.([€₤₳¢¤฿฿₵₡₫ƒ₲₭£₥₦₱〒₮₩₴₪៛﷼₢M₰₯₠₣₧ƒ][a−z0−9A−Z]9,11[€₤₳¢¤฿฿₵₡₫ƒ₲₭£₥₦₱〒₮₩₴₪៛﷼₢ℳ₰₯₠₣₧ƒ][a-z0-9A-Z]{9,11}[€₤₳¢¤฿฿₵₡₫ƒ₲₭£₥₦₱〒₮₩₴₪៛﷼₢M₰₯₠₣₧ƒ][a−z0−9A−Z]9,11[€₤₳¢¤฿฿₵₡₫ƒ₲₭£₥₦₱〒₮₩₴₪៛﷼₢ℳ₰₯₠₣₧ƒ]).”;

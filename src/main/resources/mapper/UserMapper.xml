@@ -9,7 +9,7 @@
     userId,userName,password,phone
   </sql>
 
-  <insert id="insert" parameterType="com.winterchen.model.UserDomain">
+  <insert id="insert" useGeneratedKeys="true" keyProperty="userId" parameterType="com.winterchen.model.UserDomain">
     INSERT INTO
       <include refid="BASE_TABLE"/>
     <trim prefix="(" suffix=")" suffixOverrides=",">

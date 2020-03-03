@@ -1,12 +1,17 @@
 package com.winterchen.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.taobao.api.ApiException;
 import com.taobao.api.DefaultTaobaoClient;
 import com.taobao.api.TaobaoClient;
 import com.taobao.api.request.*;
 import com.taobao.api.response.*;
 import com.winterchen.config.TaobaoConfig;
+import com.winterchen.model.CouponDomain;
+import com.winterchen.model.SysConfigDomain;
 import com.winterchen.model.UserDomain;
+import com.winterchen.service.coupon.CouponService;
+import com.winterchen.service.sysconfig.SysConfigService;
 import com.winterchen.service.user.UserService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -15,10 +20,17 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.dom4j.Document;
+import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * Created by Administrator on 2017/8/16.
@@ -31,7 +43,124 @@ public class TaobaoApiController {
     @Autowired
     private UserService userService;
     @Autowired
+    private CouponService couponService;
+    @Autowired
+    private SysConfigService sysConfigService;
+    @Autowired
     private TaobaoConfig taobaoConfig;
+    @Autowired
+    private ObjectMapper objectMapper;
+    private String token = "yijun2020";
+
+    @ResponseBody
+    @GetMapping("/update.sysconfig")
+    @ApiOperation(value = "更新系统参数", notes = "更新系统参数")
+    public SysConfigDomain updateSysconfig(SysConfigDomain sysConfigDomain){
+        return sysConfigService.insertOrUpdatteSysConfig(sysConfigDomain);
+    }
+
+    @ResponseBody
+    @GetMapping("/coupon")
+    @ApiOperation(value = "依据优惠券参数查询优惠券信息", notes = "依据优惠券参数查询优惠券信息")
+    public CouponDomain getCouponById(@RequestParam(name = "id", required = true) Integer id){
+        CouponDomain couponDomain = couponService.selectCoupon(id);
+        if(couponDomain == null)
+            return null;
+        if(!couponDomain.isReply()){
+            couponDomain.setCouponText("请刷新重试");
+        }
+        return couponDomain;
+    }
+
+    @ResponseBody
+    @GetMapping("/verifyweixin")
+    @ApiOperation(value = "验证消息来自微信服务器", notes = "验证消息来自微信服务器")
+    public String verifyWeixin(@RequestParam(name = "signature", required = true)
+                            String signature,
+                            @RequestParam(name = "timestamp", required = true)
+                            String timestamp,
+                            @RequestParam(name = "nonce", required = true)
+                            String nonce,
+                            @RequestParam(name = "echostr", required = true)
+                            String echostr){
+        System.out.print("signature=" + signature + " timestamp=" +timestamp + " nonce=" + nonce);
+        if(checkSignature(signature, timestamp, nonce)) {
+            System.out.print("echostr=" + echostr);
+            return echostr;
+        }
+        return null;
+    }
+    @ResponseBody
+    @PostMapping("/verifyweixin")
+    @ApiOperation(value = "验证消息来自微信服务器", notes = "验证消息来自微信服务器")
+    public String verifyWeixin(@RequestBody String body){
+        try {
+            //2.加载xml
+            System.out.println(body);
+            Document document = DocumentHelper.parseText(body);
+            //3.获取根节点
+            Element rootElement = document.getRootElement();
+            Element toUserName = rootElement.element("ToUserName");
+            Element fromUserName = rootElement.element("FromUserName");
+            Element msgType = rootElement.element("MsgType");
+            if(Objects.equals(msgType.getStringValue(),"event")){
+                //关注
+                Element event = rootElement.element("Event");
+                if(Objects.equals(event.getStringValue(),"subscribe")){
+                    String reply = String.format("<xml>\n" +
+                            "  <ToUserName><![CDATA[%s]]></ToUserName>\n" +
+                            "  <FromUserName><![CDATA[%s]]></FromUserName>\n" +
+                            "  <CreateTime>%d</CreateTime>\n" +
+                            "  <MsgType><![CDATA[text]]></MsgType>\n" +
+                            "  <Content><![CDATA[%s]]></Content>\n" +
+                            "</xml>",fromUserName.getStringValue(),toUserName.getStringValue(),
+                            System.currentTimeMillis(),"小主，你可以尝试在淘宝分享淘口令发送给我，就能自动查找淘宝/天猫内部优惠券，快来试试吧！");
+                    return reply;
+                }
+            }else if(Objects.equals(msgType.getStringValue(),"text")){
+                Element content = rootElement.element("Content");
+                CouponDomain couponDomain = new CouponDomain();
+                couponService.insertCoupon(couponDomain);
+                SysConfigDomain sysConfigDomain = sysConfigService.selectSysConfig();
+                //开启一个线程取获取结果
+                new Thread(()-> {
+                    try{
+                        HttpClient client = HttpClients.custom().build();
+                        HttpGet httpGet=new HttpGet(String.format(
+                                "https://api.taobaokeapi.com/?usertoken=%s&method=api.taobao.tkl2newtkl&adzone_id=%s&site_id=%s&password_content=%s",
+                                sysConfigDomain.getUsertoken(),taobaoConfig.getAdzoneId(),taobaoConfig.getSiteId(),content.getStringValue().substring(0,50))
+                        );
+                        HttpResponse response = client.execute(httpGet);
+                        String result = EntityUtils.toString(response.getEntity(), "UTF-8");
+                        System.out.println("result:"+result);
+                        couponDomain.setCouponText(result);
+                        couponService.updateCoupon(couponDomain);
+                    }catch(Exception e){
+                        e.printStackTrace();
+                    }
+                }).start();
+
+                //把信息存数据库 并获取数据id带到url上
+                String reply = String.format("<xml>\n" +
+                                "  <ToUserName><![CDATA[%s]]></ToUserName>\n" +
+                                "  <FromUserName><![CDATA[%s]]></FromUserName>\n" +
+                                "  <CreateTime>%d</CreateTime>\n" +
+                                "  <MsgType><![CDATA[text]]></MsgType>\n" +
+                                "  <Content><![CDATA[%s]]></Content>\n" +
+                                "</xml>",
+                        fromUserName.getStringValue(),
+                        toUserName.getStringValue(),
+                        System.currentTimeMillis(),
+                        //跳转地址和查看参数id
+                        String.format("<a href='%s%d'>点击领取优惠券</a>",sysConfigDomain.getCouponJumpUrl(),couponDomain.getId())
+                );
+                return reply;
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+        return null;
+    }
 
     @ResponseBody
     @PostMapping("/add")
@@ -39,6 +168,7 @@ public class TaobaoApiController {
     public int addUser(UserDomain user){
         return userService.addUser(user);
     }
+
 
     @ResponseBody
     @GetMapping("/all")
@@ -123,14 +253,14 @@ public class TaobaoApiController {
     @ResponseBody
     @GetMapping("/taobao.tbk.sc.material.optional")
     @ApiOperation(value = " 淘宝客-获取全网淘客商品", notes = "获取全网淘客商品")
-    public Object TbkScMaterialOptionalRequest(@RequestParam(name = "usertoken") String usertoken,
-                                       @RequestParam(name = "q") String q,
+    public Object TbkScMaterialOptionalRequest(@RequestParam(name = "q") String q,
                                        @RequestParam(name = "pageSize",defaultValue = "20")Integer pageSize,
                                        @RequestParam(name = "pageNo" ,defaultValue = "1")Integer pageNo) throws IOException {
+        SysConfigDomain sysConfigDomain = sysConfigService.selectSysConfig();
         HttpClient client = HttpClients.custom().build();
         HttpGet httpGet=new HttpGet(String.format(
                 "https://api.taobaokeapi.com/?usertoken=%s&method=taobao.tbk.sc.material.optional&q=%s&page_size=%d&page_no=%d&adzone_id=%s&site_id=%s",
-                usertoken,q,pageSize,pageNo,taobaoConfig.getAdzoneId(),taobaoConfig.getSiteId())
+                sysConfigDomain.getUsertoken(),q,pageSize,pageNo,taobaoConfig.getAdzoneId(),taobaoConfig.getSiteId())
         );
         HttpResponse response = client.execute(httpGet);
         return EntityUtils.toString(response.getEntity(), "UTF-8");
@@ -163,5 +293,47 @@ public class TaobaoApiController {
     }
 
 
+    private boolean checkSignature(String signature, String timestamp,
+                                   String nonce) {
+        // 1.将token、timestamp、nonce三个参数进行字典序排序
+        String[] arr = new String[] { token, timestamp, nonce };
+        Arrays.sort(arr);
+
+        // 2. 将三个参数字符串拼接成一个字符串进行sha1加密
+        StringBuilder content = new StringBuilder();
+        for (int i = 0; i < arr.length; i++) {
+            content.append(arr[i]);
+        }
+        MessageDigest md = null;
+        String tmpStr = null;
+        try {
+            md = MessageDigest.getInstance("SHA-1");
+            // 将三个参数字符串拼接成一个字符串进行sha1加密
+            byte[] digest = md.digest(content.toString().getBytes());
+            tmpStr = byteToStr(digest);
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+
+        content = null;
+        // 3.将sha1加密后的字符串可与signature对比，标识该请求来源于微信
+        return tmpStr != null ? tmpStr.equals(signature.toUpperCase()) : false;
+    }
+    private String byteToStr(byte[] byteArray) {
+        StringBuilder strDigest = new StringBuilder();
+        for (int i = 0; i < byteArray.length; i++) {
+            strDigest.append(byteToHexStr(byteArray[i]));
+        }
+        return strDigest.toString();
+    }
+    private String byteToHexStr(byte mByte) {
+        char[] Digit = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A',
+                'B', 'C', 'D', 'E', 'F' };
+        char[] tempArr = new char[2];
+        tempArr[0] = Digit[(mByte >>> 4) & 0X0F];
+        tempArr[1] = Digit[mByte & 0X0F];
+        String s = new String(tempArr);
+        return s;
+    }
 
 }
