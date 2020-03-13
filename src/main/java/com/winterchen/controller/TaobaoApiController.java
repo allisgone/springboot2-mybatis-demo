@@ -6,9 +6,11 @@ import com.taobao.api.DefaultTaobaoClient;
 import com.taobao.api.TaobaoClient;
 import com.taobao.api.request.*;
 import com.taobao.api.response.*;
+import com.winterchen.config.NetClient;
 import com.winterchen.config.TaobaoConfig;
 import com.winterchen.model.CouponDomain;
 import com.winterchen.model.SysConfigDomain;
+import com.winterchen.model.TklObject;
 import com.winterchen.model.UserDomain;
 import com.winterchen.service.coupon.CouponService;
 import com.winterchen.service.sysconfig.SysConfigService;
@@ -30,6 +32,8 @@ import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -50,6 +54,8 @@ public class TaobaoApiController {
     private TaobaoConfig taobaoConfig;
     @Autowired
     private ObjectMapper objectMapper;
+    @Autowired
+    private NetClient netClient;
     private String token = "yijun2020";
 
     @ResponseBody
@@ -114,34 +120,40 @@ public class TaobaoApiController {
                             "  <MsgType><![CDATA[text]]></MsgType>\n" +
                             "  <Content><![CDATA[%s]]></Content>\n" +
                             "</xml>",fromUserName.getStringValue(),toUserName.getStringValue(),
-                            System.currentTimeMillis(),"小主，你可以尝试在淘宝分享淘口令发送给我，就能自动查找淘宝/天猫内部优惠券，快来试试吧！");
+                            System.currentTimeMillis(),"小主，你可以尝试在淘宝分享淘口令或者链接发送给我，就能自动查找淘宝/天猫内部优惠券，快来试试吧！");
                     return reply;
                 }
             }else if(Objects.equals(msgType.getStringValue(),"text")){
                 Element content = rootElement.element("Content");
                 CouponDomain couponDomain = new CouponDomain();
-                couponService.insertCoupon(couponDomain);
-                SysConfigDomain sysConfigDomain = sysConfigService.selectSysConfig();
-                //开启一个线程取获取结果
-                new Thread(()-> {
-                    try{
-                        HttpClient client = HttpClients.custom().build();
-                        HttpGet httpGet=new HttpGet(String.format(
-                                "https://api.taobaokeapi.com/?usertoken=%s&method=api.taobao.tkl2newtkl&adzone_id=%s&site_id=%s&password_content=%s",
-                                sysConfigDomain.getUsertoken(),taobaoConfig.getAdzoneId(),taobaoConfig.getSiteId(),content.getStringValue().substring(0,50))
-                        );
-                        HttpResponse response = client.execute(httpGet);
-                        String result = EntityUtils.toString(response.getEntity(), "UTF-8");
-                        System.out.println("result:"+result);
-                        couponDomain.setCouponText(result);
-                        couponService.updateCoupon(couponDomain);
-                    }catch(Exception e){
-                        e.printStackTrace();
-                    }
-                }).start();
 
+                SysConfigDomain sysConfigDomain = sysConfigService.selectSysConfig();
+                Map<String,Object> param = new HashMap<>();
+                param.put("sid",sysConfigDomain.getSid());
+                param.put("pid",sysConfigDomain.getPid());
+                param.put("tkl", content.getStringValue());
+                param.put("signurl",5);
+                String result = netClient.openGaoyongzhuanlianTkl(param);
+                couponDomain.setCouponText(result);
+                couponService.insertCoupon(couponDomain);
+                if(result.indexOf("\"status\":200")==-1){
+                   return String.format("<xml>\n" +
+                                    "  <ToUserName><![CDATA[%s]]></ToUserName>\n" +
+                                    "  <FromUserName><![CDATA[%s]]></FromUserName>\n" +
+                                    "  <CreateTime>%d</CreateTime>\n" +
+                                    "  <MsgType><![CDATA[text]]></MsgType>\n" +
+                                    "  <Content><![CDATA[%s]]></Content>\n" +
+                                    "</xml>",
+                            fromUserName.getStringValue(),
+                            toUserName.getStringValue(),
+                            System.currentTimeMillis(),
+                            "未找到优惠券，请换个商品试试"
+                    );
+                }
+                TklObject tklObject = objectMapper.readValue(result, TklObject.class);
+                TklObject.Content tklContent = tklObject.getContent().get(0);
                 //把信息存数据库 并获取数据id带到url上
-                String reply = String.format("<xml>\n" +
+                return String.format("<xml>\n" +
                                 "  <ToUserName><![CDATA[%s]]></ToUserName>\n" +
                                 "  <FromUserName><![CDATA[%s]]></FromUserName>\n" +
                                 "  <CreateTime>%d</CreateTime>\n" +
@@ -152,9 +164,14 @@ public class TaobaoApiController {
                         toUserName.getStringValue(),
                         System.currentTimeMillis(),
                         //跳转地址和查看参数id
-                        String.format("<a href='%s%d'>点击领取优惠券</a>",sysConfigDomain.getCouponJumpUrl(),couponDomain.getId())
+                        String.format("%s<br/>原价:(%s)<br/>优惠价:(%s)<br/><a href='%s%d'>%s--点击领取优惠券</a>",
+                                tklContent.getTitle(),
+                                tklContent.getSize(),
+                                tklContent.getQuanhou_jiage(),
+                                sysConfigDomain.getCouponJumpUrl(),
+                                couponDomain.getId(),
+                                tklContent.getCoupon_info())
                 );
-                return reply;
             }
         }catch(Exception e){
             e.printStackTrace();
@@ -162,6 +179,10 @@ public class TaobaoApiController {
         return null;
     }
 
+    public static void main(String[] args) {
+        String x = "asdasfdddddddddddddfs";
+        x.substring(0,5);
+    }
     @ResponseBody
     @PostMapping("/add")
     @ApiOperation(value = "添加用户", notes = "添加单个用户")
@@ -269,12 +290,12 @@ public class TaobaoApiController {
     @ResponseBody
     @GetMapping("/api.taobao.get.taobao.cate")
     @ApiOperation(value = " 淘宝客-获取商品分类接口", notes = "获取商品分类接口")
-    public Object TbkCateRequest(@RequestParam(name = "usertoken") String usertoken,
-                                               @RequestParam(name = "parentCid",defaultValue = "0") String parentCid) throws IOException {
+    public Object TbkCateRequest(@RequestParam(name = "parentCid",defaultValue = "0") String parentCid) throws IOException {
+        SysConfigDomain sysConfigDomain = sysConfigService.selectSysConfig();
         HttpClient client = HttpClients.custom().build();
         HttpGet httpGet=new HttpGet(String.format(
                 "https://api.taobaokeapi.com/?usertoken=%s&method=api.taobao.get.taobao.cate&parent_cid=%s",
-                usertoken,parentCid)
+                sysConfigDomain.getUsertoken(),parentCid)
         );
         HttpResponse response = client.execute(httpGet);
         return EntityUtils.toString(response.getEntity(), "UTF-8");

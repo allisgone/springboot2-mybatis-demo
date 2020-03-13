@@ -12,6 +12,10 @@ public class SysConfigDomain {
 
     private String usertoken;
 
+    private String sid;
+
+    private String pid;
+
     private Timestamp updateTime;
 
 }

@@ -13,10 +13,10 @@
     INSERT INTO
       <include refid="BASE_TABLE"/>
     <trim prefix="(" suffix=")" suffixOverrides=",">
-      create_time,reply,
+      create_time,reply,coupon_text
     </trim>
     <trim prefix="VALUES(" suffix=")" suffixOverrides=",">
-      now(),0,
+      now(),1,#{couponText, jdbcType=VARCHAR}
     </trim>
   </insert>
 

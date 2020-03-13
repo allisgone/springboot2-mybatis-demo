@@ -6,7 +6,7 @@
   </sql>
 
   <sql id="BASE_COLUMN">
-    id,coupon_jump_url as couponJumpUrl,usertoken,date_format(update_time,'%Y-%m-%d %H:%i:%s') as updateTime
+    id,coupon_jump_url as couponJumpUrl,usertoken,date_format(update_time,'%Y-%m-%d %H:%i:%s') as updateTime,sid,pid
   </sql>
 
   <insert id="insertSysConfig" useGeneratedKeys="true" keyProperty="id" parameterType="com.winterchen.model.SysConfigDomain">
@@ -29,6 +29,12 @@
         #{usertoken, jdbcType=VARCHAR},
       </if>
       now(),
+      <if test="sid != null">
+        #{sid, jdbcType=VARCHAR},
+      </if>
+      <if test="pid != null">
+        #{pid, jdbcType=VARCHAR},
+      </if>
     </trim>
   </insert>
 
@@ -42,6 +48,12 @@
       usertoken = #{usertoken, jdbcType=VARCHAR},
       </if>
       update_time = now(),
+      <if test="sid != null">
+        sid = #{sid, jdbcType=VARCHAR},
+      </if>
+      <if test="pid != null">
+        pid = #{pid, jdbcType=VARCHAR},
+      </if>
     </trim>
   </update>
 
