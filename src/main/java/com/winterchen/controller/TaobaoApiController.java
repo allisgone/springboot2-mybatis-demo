@@ -29,6 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
@@ -131,7 +132,7 @@ public class TaobaoApiController {
                 Map<String,Object> param = new HashMap<>();
                 param.put("sid",sysConfigDomain.getSid());
                 param.put("pid",sysConfigDomain.getPid());
-                param.put("tkl", content.getStringValue());
+                param.put("tkl", URLEncoder.encode(content.getStringValue(),"UTF-8"));
                 param.put("signurl",5);
                 String result = netClient.openGaoyongzhuanlianTkl(param);
                 couponDomain.setCouponText(result);

@@ -53,16 +53,17 @@ public class NetClient {
     private String generateUrl(String api,Map<String,Object> param){
         if(api == null)
             return null;
+        api = String.format(api.toString(),this.zhetaokeAppkey);
         StringBuffer urlAddParam = new StringBuffer(api);
         if(Objects.nonNull(param) && !param.isEmpty()){
             if(api.indexOf("?")!=-1){
-                param.forEach((k,v)->{if(v!=null && !v.equals("null")) urlAddParam.append("&").append(k).append("=").append(v);});
+                param.forEach((k,v)->{if(v!=null && !v.equals("null") && !k.equals("appkey")) urlAddParam.append("&").append(k).append("=").append(v);});
             }else{
                 urlAddParam.append("?");
-                param.forEach((k,v)->{if(v!=null && !v.equals("null")) urlAddParam.append(k).append("=").append(v).append("&");});
+                param.forEach((k,v)->{if(v!=null && !v.equals("null") && !k.equals("appkey")) urlAddParam.append(k).append("=").append(v).append("&");});
             }
         }
-        return String.format(urlAddParam.toString(),this.zhetaokeAppkey);
+        return urlAddParam.toString();
     }
 
     private String getForResult(String api,String bakApi,Map<String,Object> param){
