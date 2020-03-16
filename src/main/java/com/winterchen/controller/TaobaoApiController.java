@@ -165,7 +165,7 @@ public class TaobaoApiController {
                         toUserName.getStringValue(),
                         System.currentTimeMillis(),
                         //跳转地址和查看参数id
-                        String.format("%s\n原价:(￥%元)\n优惠价:(￥%s元)\n<a href='%s%d'>%s--点击领取优惠券</a>",
+                        String.format("%s\n\n原价:￥%s元\n\n优惠价:￥%s元\n\n<a href='%s%d'>%s-->点击领取优惠券</a>",
                                 tklContent.getTitle(),
                                 tklContent.getSize(),
                                 tklContent.getQuanhou_jiage(),
