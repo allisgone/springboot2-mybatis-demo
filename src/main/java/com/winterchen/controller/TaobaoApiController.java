@@ -165,7 +165,7 @@ public class TaobaoApiController {
                         toUserName.getStringValue(),
                         System.currentTimeMillis(),
                         //跳转地址和查看参数id
-                        String.format("%s<br/>原价:(%s)<br/>优惠价:(%s)<br/><a href='%s%d'>%s--点击领取优惠券</a>",
+                        String.format("%s\n原价:(￥%元)\n优惠价:(￥%s元)\n<a href='%s%d'>%s--点击领取优惠券</a>",
                                 tklContent.getTitle(),
                                 tklContent.getSize(),
                                 tklContent.getQuanhou_jiage(),
@@ -180,10 +180,6 @@ public class TaobaoApiController {
         return null;
     }
 
-    public static void main(String[] args) {
-        String x = "asdasfdddddddddddddfs";
-        x.substring(0,5);
-    }
     @ResponseBody
     @PostMapping("/add")
     @ApiOperation(value = "添加用户", notes = "添加单个用户")
