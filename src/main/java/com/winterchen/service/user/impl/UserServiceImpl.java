@@ -31,6 +31,7 @@ public class UserServiceImpl implements UserService {
     * pageNum 开始页数
     * pageSize 每页显示的数据条数
     * */
+    //@DataSource("xxxxxxx") 指定数据源
     @Override
     public PageInfo<UserDomain> findAllUser(int pageNum, int pageSize) {
         //将参数传给这个方法就可以实现物理分页了，非常简单。
