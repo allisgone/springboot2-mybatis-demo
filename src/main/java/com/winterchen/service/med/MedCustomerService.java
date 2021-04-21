@@ -14,7 +14,5 @@ public interface MedCustomerService {
 
     List<MedCustomerDomain> selectByUserType(Integer userType);
 
-    MedCustomerDomain saveMedCustomer(MedCustomerDomain medCustomerDomain);
-
-    MedCustomerDomain updateMedCustomerSocre(MedCustomerDomain medCustomerDomain);
+    MedCustomerDomain saveMedCustomer(MedCustomerDomain medCustomerDomain) throws Exception;
 }

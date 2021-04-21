@@ -2,19 +2,21 @@ drop table med_customer;
 CREATE TABLE `med_customer` (
   `id` bigint(11) NOT NULL AUTO_INCREMENT COMMENT 'id',
   `parent_id` bigint(11) DEFAULT NULL COMMENT '父节点id',
+  `root_id` bigint(11) DEFAULT '0' COMMENT '根节点id(非总根0节点)加盟商类型下使用',
   `user_name` varchar(128) NOT NULL COMMENT '用户名',
   `pwd_word` varchar(64) NOT NULL COMMENT '密码',
-  `status` tinyint(1) DEFAULT '1' COMMENT '状态 1-有效；0-无效',
+  `status` tinyint(1) DEFAULT '0' COMMENT '状态 0-有效；1-无效',
   `grade` int(4) DEFAULT NULL COMMENT '等级',
   `user_type` int(4) DEFAULT '0' COMMENT '用户类型 1-加盟商 0-普通用户',
-  `child_lev` int(4) DEFAULT '2' COMMENT '下辖级别 加盟商可能超过2',
+  `child_lev` int(4) DEFAULT '2' COMMENT '下辖级别 加盟商可能超过2 系统参数为准，可手动修改',
   `socre` float(8,2) NOT NULL DEFAULT '0.00' COMMENT '积分',
   `ratio` float(6,4) DEFAULT '0.0000' COMMENT '比率',
+  `proxy_ratio` float(6,4) DEFAULT '0.0000' COMMENT '加盟商独立比率',
   `create_time` timestamp NULL DEFAULT NULL COMMENT '创建时间',
   `ext_data` varchar(1000) DEFAULT NULL COMMENT '扩展数据',
   PRIMARY KEY (`id`),
   KEY `pid_idx` (`parent_id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=12226 DEFAULT CHARSET=utf8;
 
 INSERT INTO `med_customer` VALUES ('1', null,  'root','med_root_user', '1',0,1,9999,null);
 INSERT INTO `med_customer` VALUES ('2', '1', 'join1', '2222', '1',1,1,5,null);
@@ -33,3 +35,25 @@ INSERT INTO `med_customer` VALUES ('122', '12', 'user122', '777', '1',3,2,2,null
 INSERT INTO `med_customer` VALUES ('1221', '122', 'user1221', '888', '1',4,2,2,null);
 INSERT INTO `med_customer` VALUES ('1222', '122', 'user1222', '999', '1',4,2,2,null);
 INSERT INTO `med_customer` VALUES ('12211', '1222', 'user12211', '000', '1',5,2,2,null);
+
+CREATE TABLE `med_order` (
+  `id` bigint(11) NOT NULL,
+  `customer_id` bigint(11) NOT NULL,
+  `create_time` timestamp NULL DEFAULT NULL,
+  `socre` float(8,2) NOT NULL,
+  `status` tinyint(1) DEFAULT '0' COMMENT '状态 0-申请；1-有效；2-无效',
+  `remark` varchar(255) DEFAULT NULL COMMENT '备注',
+  `order_name` bigint(11) DEFAULT NULL COMMENT '订单名',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+CREATE TABLE `med_socre` (
+  `id` bigint(11) NOT NULL,
+  `customer_id` bigint(11) NOT NULL,
+  `create_time` timestamp NULL DEFAULT NULL,
+  `socre` float(8,2) NOT NULL,
+  `status` tinyint(1) DEFAULT '0' COMMENT '状态 1-有效；0-无效',
+  `remark` varchar(255) DEFAULT NULL COMMENT '备注',
+  `order_id` bigint(11) DEFAULT NULL COMMENT '订单号',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;

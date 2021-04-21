@@ -3,11 +3,10 @@ package com.winterchen.service.med.impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.winterchen.dao.MedCustomerDao;
-import com.winterchen.dao.MedSocreDao;
 import com.winterchen.model.MedCustomerDomain;
-import com.winterchen.model.MedSocreDomain;
 import com.winterchen.service.med.MedCustomerService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,13 +19,11 @@ import java.util.Objects;
  * Created by Administrator on 2017/8/16.
  */
 @Service(value = "medCustomerService")
+@NoArgsConstructor
+@AllArgsConstructor
 public class MedCustomerServiceImpl  extends ServiceImpl<MedCustomerDao, MedCustomerDomain> implements MedCustomerService {
 
-    @Autowired
     private MedCustomerDao medCustomerDao;
-
-    @Autowired
-    private MedSocreDao medSocreDao;
 
     @Override
     public List<Map> selectCustomerLev(Long userId){
@@ -41,48 +38,27 @@ public class MedCustomerServiceImpl  extends ServiceImpl<MedCustomerDao, MedCust
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public MedCustomerDomain saveMedCustomer(MedCustomerDomain medCustomerDomain){
+    public MedCustomerDomain saveMedCustomer(MedCustomerDomain medCustomerDomain) throws Exception {
         MedCustomerDomain parent = this.getOne(new QueryWrapper<MedCustomerDomain>().eq("id",medCustomerDomain.getParentId()).eq("status", 1));
         if(Objects.isNull(parent)){
-            return null;
+            throw new Exception("未找到父级信息");
+        }
+        MedCustomerDomain exist = this.getOne(new QueryWrapper<MedCustomerDomain>().eq("user_name", medCustomerDomain.getUserName()));
+        if(Objects.isNull(exist)){
+            throw new Exception("用户已存在");
         }
         //下一级
         medCustomerDomain.setGrade(parent.getGrade() + 1);
+        //设置根节点 便于后续查询
+        if(Objects.isNull(medCustomerDomain.getRootId())){
+            medCustomerDomain.setRootId(parent.getRootId());
+        }
+        if(medCustomerDomain.getUserType() == 0){
+            medCustomerDomain.setProxyRatio(0.0f);
+        }
         medCustomerDomain.setCreateTime(new Timestamp(System.currentTimeMillis()));
         this.save(medCustomerDomain);
         return medCustomerDomain;
-    }
-
-    @Transactional(rollbackFor = Exception.class)
-    public MedCustomerDomain updateMedCustomerSocre(MedCustomerDomain medCustomerDomain){
-        MedSocreDomain medSocreDomain = new MedSocreDomain();
-        medSocreDomain.setSocre(medCustomerDomain.getSocre());
-        medSocreDomain.setCreateTime(new Timestamp(System.currentTimeMillis()));
-        medSocreDomain.setCustomerId(medCustomerDomain.getId());
-        medSocreDao.insert(medSocreDomain);
-
-        this.setParentSocre(medCustomerDomain,2);
-        return medCustomerDomain;
-    }
-
-    private void setParentSocre(MedCustomerDomain medCustomerDomain, int loopTimes){
-        if(loopTimes <= 0){
-            return;
-        }
-        //上级
-        MedCustomerDomain parent = this.getOne(new QueryWrapper<MedCustomerDomain>().eq("id",medCustomerDomain.getParentId()).eq("status", 1));
-        if(Objects.isNull(parent)){
-            return ;
-        }
-        MedSocreDomain parentMedSocreDomain = new MedSocreDomain();
-        //上级分佣
-        parentMedSocreDomain.setSocre(parent.getRatio() * medCustomerDomain.getSocre());
-        parentMedSocreDomain.setCreateTime(new Timestamp(System.currentTimeMillis()));
-        parentMedSocreDomain.setCustomerId(medCustomerDomain.getId());
-        medSocreDao.insert(parentMedSocreDomain);
-        medCustomerDomain.setParentId(parent.getParentId());
-        //递归调用设置上级佣金
-        this.setParentSocre(medCustomerDomain,loopTimes--);
     }
 
 }

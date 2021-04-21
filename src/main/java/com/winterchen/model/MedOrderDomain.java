@@ -7,8 +7,8 @@ import lombok.Data;
 import java.sql.Timestamp;
 
 @Data
-@TableName("med_socre")
-public class MedSocreDomain {
+@TableName("med_order")
+public class MedOrderDomain {
     @TableId
     private Long id;
 
@@ -23,6 +23,6 @@ public class MedSocreDomain {
 
     private String remark;
     //关联一笔订单，来源可溯
-    private Long orderId;
+    private String orderName;
 
 }

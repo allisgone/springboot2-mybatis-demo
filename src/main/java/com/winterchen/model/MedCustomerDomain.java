@@ -14,6 +14,8 @@ public class MedCustomerDomain {
 
     private Long parentId;
 
+    private Long rootId;
+
     private String userName;
 
     private String pwdWord;
@@ -29,6 +31,8 @@ public class MedCustomerDomain {
     private float socre;
 
     private float ratio;
+
+    private float proxyRatio;
 
     //@TableField(exist = false)
     private Timestamp createTime;
