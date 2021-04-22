@@ -5,8 +5,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.winterchen.dao.MedCustomerDao;
 import com.winterchen.model.MedCustomerDomain;
 import com.winterchen.service.med.MedCustomerService;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,10 +18,9 @@ import java.util.Objects;
  * Created by Administrator on 2017/8/16.
  */
 @Service(value = "medCustomerService")
-@NoArgsConstructor
-@AllArgsConstructor
 public class MedCustomerServiceImpl  extends ServiceImpl<MedCustomerDao, MedCustomerDomain> implements MedCustomerService {
 
+    @Autowired
     private MedCustomerDao medCustomerDao;
 
     @Override

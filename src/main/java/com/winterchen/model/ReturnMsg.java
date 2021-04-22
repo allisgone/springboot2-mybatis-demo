@@ -14,4 +14,8 @@ public class ReturnMsg<T> {
 
     private String errorMsg;
 
+    public ReturnMsg(T body){
+        this.body =body;
+    }
+
 }

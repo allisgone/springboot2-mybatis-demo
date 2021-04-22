@@ -9,8 +9,7 @@ import com.winterchen.model.MedCustomerDomain;
 import com.winterchen.model.MedOrderDomain;
 import com.winterchen.model.MedSocreDomain;
 import com.winterchen.service.med.MedOrderService;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,14 +20,15 @@ import java.util.Objects;
  * Created by Administrator on 2017/8/16.
  */
 @Service(value = "medOrderService")
-@NoArgsConstructor
-@AllArgsConstructor
 public class MedOrderServiceImpl extends ServiceImpl<MedOrderDao, MedOrderDomain> implements MedOrderService {
 
+    @Autowired
     private MedCustomerDao medCustomerDao;
 
+    @Autowired
     private MedSocreDao medSocreDao;
 
+    @Autowired
     private MedOrderDao medOrderDao;
 
 

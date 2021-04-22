@@ -14,7 +14,7 @@
         <result property="orderName" column="order_name"/>
     </resultMap>
 
-    <select id="sumCustomerSocre" parameterType="Long"  resultMap="float">
+    <select id="sumCustomerSocre" parameterType="Long"  resultType="float">
         select sum(socre) as total from <include refid="BASE_TABLE"/> where customer_id = #{0} and status = 1
     </select>
 </mapper>

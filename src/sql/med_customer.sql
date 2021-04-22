@@ -57,3 +57,27 @@ CREATE TABLE `med_socre` (
   `order_id` bigint(11) DEFAULT NULL COMMENT '订单号',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+
+
+CREATE TABLE `med_dictionary_classification` (
+  `id` bigint(16) NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `item_type` tinyint(2) NOT NULL COMMENT '字典项类型 1 单独项 2数组项',
+  `dictionary_classification` varchar(100) NOT NULL COMMENT '字典类型值',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `remarks` varchar(255) DEFAULT NULL COMMENT '备注',
+  `status` bigint(1) DEFAULT NULL COMMENT '有效性(0：失效,1：有效)',
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC COMMENT='字典类型';
+
+CREATE TABLE `med_dictionary_item` (
+  `id` bigint(16) NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `pid` bigint(16) DEFAULT NULL COMMENT '父级ID',
+  `dictionary_classification_id` bigint(16) NOT NULL COMMENT '字典类型id',
+  `item_data` varchar(20000) NOT NULL COMMENT '字典项内容',
+  `item_order` bigint(16) DEFAULT '1' COMMENT '排序',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `remarks` varchar(255) DEFAULT NULL COMMENT '备注',
+  `status` bigint(1) DEFAULT NULL COMMENT '有效性(0：失效,1：有效)',
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC COMMENT='字典项';

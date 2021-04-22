@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.winterchen.dao.DictionaryItemDao">
+
+	<!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.winterchen.model.DictionaryItemEntity" id="dictionaryItemMap">
+        <result property="id" column="id"/>
+        <result property="pid" column="pid"/>
+        <result property="dictionaryClassificationId" column="dictionary_classification_id"/>
+        <result property="itemData" column="item_data"/>
+        <result property="itemOrder" column="item_order"/>
+        <result property="createTime" column="create_time"/>
+        <result property="remarks" column="remarks"/>
+        <result property="status" column="status"/>
+    </resultMap>
+
+
+    <select id="seleteClassification" parameterType="java.util.Map" resultMap="dictionaryItemMap">
+        SELECT
+          t1.id,
+          t1.pid,
+          t1.dictionary_classification_id,
+          t1.item_data,
+          t1.item_order,
+          t1.create_time,
+          t1.remarks,
+          t1.status
+        FROM
+            dictionary_item t1
+        LEFT JOIN dictionary_classification t2 ON t1.dictionary_classification_id = t2.id
+        where  t2.dictionary_classification = #{params.dictionaryClassification}
+        and t2.item_type = 2
+        ORDER BY t1.item_order
+        <if test="params.number != -1">
+            limit #{params.number}
+        </if>
+    </select>
+
+    <select id="seleteClassificationSingle" parameterType="java.util.Map" resultMap="dictionaryItemMap">
+        SELECT
+          t1.id,
+          t1.pid,
+          t1.dictionary_classification_id,
+          t1.item_data,
+          t1.item_order,
+          t1.create_time,
+          t1.remarks,
+          t1.status
+        FROM
+            dictionary_item t1
+        LEFT JOIN dictionary_classification t2 ON t1.dictionary_classification_id = t2.id
+        where t2.dictionary_classification = #{params.dictionaryClassification}
+        and t2.item_type = 1
+        ORDER BY t1.item_order
+    </select>
+</mapper>
