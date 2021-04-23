@@ -37,26 +37,28 @@ INSERT INTO `med_customer` VALUES ('1222', '122', 'user1222', '999', '1',4,2,2,n
 INSERT INTO `med_customer` VALUES ('12211', '1222', 'user12211', '000', '1',5,2,2,null);
 
 CREATE TABLE `med_order` (
-  `id` bigint(11) NOT NULL,
+  `id` bigint(11) NOT NULL AUTO_INCREMENT,
   `customer_id` bigint(11) NOT NULL,
   `create_time` timestamp NULL DEFAULT NULL,
   `socre` float(8,2) NOT NULL,
   `status` tinyint(1) DEFAULT '0' COMMENT '状态 0-申请；1-有效；2-无效',
   `remark` varchar(255) DEFAULT NULL COMMENT '备注',
-  `order_name` bigint(11) DEFAULT NULL COMMENT '订单名',
+  `order_name` varchar(255) DEFAULT NULL COMMENT '订单名',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `med_socre` (
-  `id` bigint(11) NOT NULL,
+  `id` bigint(11) NOT NULL AUTO_INCREMENT,
   `customer_id` bigint(11) NOT NULL,
   `create_time` timestamp NULL DEFAULT NULL,
   `socre` float(8,2) NOT NULL,
   `status` tinyint(1) DEFAULT '0' COMMENT '状态 1-有效；0-无效',
   `remark` varchar(255) DEFAULT NULL COMMENT '备注',
   `order_id` bigint(11) DEFAULT NULL COMMENT '订单号',
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+  PRIMARY KEY (`id`),
+  KEY `idx_customer_id` (`customer_id`) USING BTREE,
+  KEY `ind_order_id` (`order_id`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
 

@@ -33,7 +33,6 @@ public class MedCustomerServiceImpl  extends ServiceImpl<MedCustomerDao, MedCust
 
         return medCustomerDao.selectByUserType(userType);
     }
-
     @Override
     @Transactional(rollbackFor = Exception.class)
     public MedCustomerDomain saveMedCustomer(MedCustomerDomain medCustomerDomain) throws Exception {
@@ -42,17 +41,28 @@ public class MedCustomerServiceImpl  extends ServiceImpl<MedCustomerDao, MedCust
             throw new Exception("未找到父级信息");
         }
         MedCustomerDomain exist = this.getOne(new QueryWrapper<MedCustomerDomain>().eq("user_name", medCustomerDomain.getUserName()));
-        if(Objects.isNull(exist)){
+        if(Objects.nonNull(exist)){
             throw new Exception("用户已存在");
         }
         //下一级
         medCustomerDomain.setGrade(parent.getGrade() + 1);
         //设置根节点 便于后续查询
-        if(Objects.isNull(medCustomerDomain.getRootId())){
-            medCustomerDomain.setRootId(parent.getRootId());
-        }
-        if(medCustomerDomain.getUserType() == 0){
+        //自己是加盟商
+        if(medCustomerDomain.getUserType() == 1){
+            //设置为根节点id
+            medCustomerDomain.setRootId(1L);
+        }else{
+            //自己是普通用户，上一级为加盟商
+            if(parent.getUserType() == 1){
+                medCustomerDomain.setRootId(parent.getId());
+            }else{
+                //否则直接复制上一级的rootId
+                medCustomerDomain.setRootId(parent.getRootId());
+            }
+            //普通用户设置代理额外提成比率为0
             medCustomerDomain.setProxyRatio(0.0f);
+            //普通用户下级写死为2
+            medCustomerDomain.setChildLev(2);
         }
         medCustomerDomain.setCreateTime(new Timestamp(System.currentTimeMillis()));
         this.save(medCustomerDomain);

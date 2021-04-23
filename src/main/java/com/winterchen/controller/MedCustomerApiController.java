@@ -42,9 +42,9 @@ public class MedCustomerApiController {
     }
 
     @ResponseBody
-    @PostMapping("/addMedCustomerSocre")
+    @PostMapping("/addMedCustomerSocreApply")
     @ApiOperation(value = "申请订单积分", notes = "申请订单积分")
-    public ReturnMsg<MedSocreDomain> addMedCustomerSocre(@RequestBody MedOrderDomain medOrderDomain) {
+    public ReturnMsg<MedSocreDomain> addMedCustomerSocreApply(@RequestBody MedOrderDomain medOrderDomain) {
         try {
             return new ReturnMsg<>(0,medOrderService.addMedCustomerSocre(medOrderDomain),null);
         } catch (Exception e) {
@@ -52,9 +52,9 @@ public class MedCustomerApiController {
         }
     }
     @ResponseBody
-    @PostMapping("/reduceMedCustomerSocre")
+    @PostMapping("/reduceMedCustomerSocreApply")
     @ApiOperation(value = "申请扣减积分", notes = "申请扣减积分")
-    public ReturnMsg<MedSocreDomain> reduceMedCustomerSocre(@RequestBody MedOrderDomain medOrderDomain) {
+    public ReturnMsg<MedSocreDomain> reduceMedCustomerSocreApply(@RequestBody MedOrderDomain medOrderDomain) {
         try {
             return new ReturnMsg<>(0,medOrderService.reduceMedCustomerSocre(medOrderDomain),null);
         } catch (Exception e) {

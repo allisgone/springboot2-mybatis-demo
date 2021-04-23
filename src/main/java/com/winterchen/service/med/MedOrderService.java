@@ -10,5 +10,9 @@ public interface MedOrderService {
 
     MedSocreDomain addMedCustomerSocre(MedOrderDomain medOrderDomain) throws Exception;
 
+    MedOrderDomain agreeMedCustomerSocre(MedOrderDomain medOrderDomain) throws Exception;
+
     MedSocreDomain reduceMedCustomerSocre(MedOrderDomain medOrderDomain) throws Exception;
+
+    MedOrderDomain rejectMedCustomerSocre(MedOrderDomain medOrderDomain) throws Exception;
 }

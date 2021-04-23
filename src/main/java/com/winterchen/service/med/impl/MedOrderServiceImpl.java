@@ -1,6 +1,7 @@
 package com.winterchen.service.med.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.winterchen.dao.MedCustomerDao;
 import com.winterchen.dao.MedOrderDao;
@@ -34,7 +35,8 @@ public class MedOrderServiceImpl extends ServiceImpl<MedOrderDao, MedOrderDomain
 
     @Transactional(rollbackFor = Exception.class)
     public MedSocreDomain addMedCustomerSocre(MedOrderDomain medOrderDomain) throws Exception {
-        MedCustomerDomain currentUser = medCustomerDao.selectOne(new QueryWrapper<MedCustomerDomain>().eq("id",medOrderDomain.getCustomerId()).eq("status", 1));
+        MedCustomerDomain currentUser = medCustomerDao.selectOne(new QueryWrapper<MedCustomerDomain>()
+                .eq("id",medOrderDomain.getCustomerId()).eq("status", 1));
         if(Objects.isNull(currentUser)){
             throw new Exception("未找到用户");
         }
@@ -45,6 +47,7 @@ public class MedOrderServiceImpl extends ServiceImpl<MedOrderDao, MedOrderDomain
         medOrderDao.insert(medOrderDomain);
 
         MedSocreDomain medSocreDomain = new MedSocreDomain();
+        //todo 可能这订单金额按照比率来搞分佣
         medSocreDomain.setSocre(medOrderDomain.getSocre());
         medSocreDomain.setCreateTime(current);
         medSocreDomain.setCustomerId(medOrderDomain.getCustomerId());
@@ -58,7 +61,9 @@ public class MedOrderServiceImpl extends ServiceImpl<MedOrderDao, MedOrderDomain
         //设置关联的等级分成
         this.setParentSocre(medOrderDomain.getId(),medOrderDomain.getSocre(),currentUser.getParentId(),loopTimes);
         //设置代理人分成
-        MedCustomerDomain root = medCustomerDao.selectOne(new QueryWrapper<MedCustomerDomain>().eq("id",currentUser.getRootId()).eq("user_type", 1).eq("status", 1));
+        MedCustomerDomain root = medCustomerDao.selectOne(new QueryWrapper<MedCustomerDomain>().
+                eq("id",currentUser.getRootId()).eq("user_type", 1)
+                .eq("status", 1));
         if(Objects.nonNull(root)){
             if(currentUser.getGrade() <= root.getChildLev()) {
                 MedSocreDomain rootMedSocreDomain = new MedSocreDomain();
@@ -73,6 +78,21 @@ public class MedOrderServiceImpl extends ServiceImpl<MedOrderDao, MedOrderDomain
             }
         }
         return medSocreDomain;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public MedOrderDomain agreeMedCustomerSocre(MedOrderDomain medOrderDomain) throws Exception {
+        MedCustomerDomain currentUser = medCustomerDao.selectOne(new QueryWrapper<MedCustomerDomain>()
+                .eq("id", medOrderDomain.getCustomerId()).eq("status", 1));
+        if (Objects.isNull(currentUser)) {
+            throw new Exception("未找到用户");
+        }
+        MedSocreDomain needUpdate = new MedSocreDomain();
+        needUpdate.setStatus(1);
+        medSocreDao.update(needUpdate,new UpdateWrapper<MedSocreDomain>().eq("order_id",medOrderDomain.getId()).eq("status",0));
+        medOrderDomain.setStatus(1);
+        medOrderDao.updateById(medOrderDomain);
+        return medOrderDomain;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -99,25 +119,44 @@ public class MedOrderServiceImpl extends ServiceImpl<MedOrderDao, MedOrderDomain
         return medSocreDomain;
     }
 
+
+    @Transactional(rollbackFor = Exception.class)
+    public MedOrderDomain rejectMedCustomerSocre(MedOrderDomain medOrderDomain) throws Exception {
+        MedCustomerDomain currentUser = medCustomerDao.selectOne(new QueryWrapper<MedCustomerDomain>()
+                .eq("id", medOrderDomain.getCustomerId()).eq("status", 1));
+        if (Objects.isNull(currentUser)) {
+            throw new Exception("未找到用户");
+        }
+        MedSocreDomain needUpdate = new MedSocreDomain();
+        needUpdate.setStatus(2);
+        medSocreDao.update(needUpdate,new UpdateWrapper<MedSocreDomain>().eq("order_id",medOrderDomain.getId()).eq("status",0));
+        medOrderDomain.setStatus(2);
+        medOrderDao.updateById(medOrderDomain);
+        return medOrderDomain;
+    }
+
     private void setParentSocre(Long orderId,float socre,Long parentId,int loopTimes){
         if(loopTimes <= 0){
             return;
         }
         //上级
-        MedCustomerDomain parent = medCustomerDao.selectOne(new QueryWrapper<MedCustomerDomain>().eq("id",parentId).eq("status", 1));
+        MedCustomerDomain parent = medCustomerDao.selectById(parentId);
         if(Objects.isNull(parent)){
             return ;
         }
-        MedSocreDomain parentMedSocreDomain = new MedSocreDomain();
         //上级分佣
         socre *= parent.getRatio();
-        parentMedSocreDomain.setSocre(socre);
-        parentMedSocreDomain.setCreateTime(new Timestamp(System.currentTimeMillis()));
-        parentMedSocreDomain.setCustomerId(parent.getId());
-        parentMedSocreDomain.setRemark("上级分佣");
-        parentMedSocreDomain.setStatus(0);
-        parentMedSocreDomain.setOrderId(orderId);
-        medSocreDao.insert(parentMedSocreDomain);
+        //只有是有效用户才给分佣 否则不分佣并且继续到上级分佣
+        if(parent.isStatus()) {
+            MedSocreDomain parentMedSocreDomain = new MedSocreDomain();
+            parentMedSocreDomain.setSocre(socre);
+            parentMedSocreDomain.setCreateTime(new Timestamp(System.currentTimeMillis()));
+            parentMedSocreDomain.setCustomerId(parent.getId());
+            parentMedSocreDomain.setRemark("上级分佣");
+            parentMedSocreDomain.setStatus(0);
+            parentMedSocreDomain.setOrderId(orderId);
+            medSocreDao.insert(parentMedSocreDomain);
+        }
         //递归调用设置上级佣金
         this.setParentSocre(orderId, socre, parent.getParentId(),loopTimes--);
     }
