@@ -20,7 +20,7 @@ public class MedCustomerDomain {
 
     private String pwdWord;
 
-    private boolean status;
+    private boolean status = true;
 
     private int grade;
 

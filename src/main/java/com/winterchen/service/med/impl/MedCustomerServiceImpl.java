@@ -66,7 +66,22 @@ public class MedCustomerServiceImpl  extends ServiceImpl<MedCustomerDao, MedCust
         }
         medCustomerDomain.setCreateTime(new Timestamp(System.currentTimeMillis()));
         this.save(medCustomerDomain);
+        medCustomerDomain.setPwdWord(null);
         return medCustomerDomain;
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public MedCustomerDomain loginMedCustomer(MedCustomerDomain medCustomerDomain) throws Exception {
+        MedCustomerDomain exist = this.getOne(new QueryWrapper<MedCustomerDomain>().eq("user_name", medCustomerDomain.getUserName())
+        .eq("status", 1));
+        if (Objects.isNull(exist)) {
+            throw new Exception("用户不存在");
+        }
+        if(!Objects.equals(medCustomerDomain.getPwdWord(),exist.getPwdWord())){
+            throw new Exception("密码不正确");
+        }
+        exist.setPwdWord(null);
+        return exist;
+    }
 }

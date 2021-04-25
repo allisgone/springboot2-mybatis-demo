@@ -23,6 +23,8 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<java.version>1.8</java.version>
 		<swagger.version>2.7.0</swagger.version>
+		<zxing.version>3.3.1</zxing.version>
+		<zxing.javase.version>3.1.0</zxing.javase.version>
 	</properties>
 
 	<dependencies>
@@ -161,6 +163,19 @@
 			<groupId>com.alibaba</groupId>
 			<artifactId>fastjson</artifactId>
 			<version>1.2.60</version>
+		</dependency>
+
+		<!--QrCode-->
+		<dependency>
+			<groupId>com.google.zxing</groupId>
+			<artifactId>core</artifactId>
+			<version>${zxing.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.google.zxing</groupId>
+			<artifactId>javase</artifactId>
+			<version>${zxing.javase.version}</version>
 		</dependency>
 	</dependencies>
 

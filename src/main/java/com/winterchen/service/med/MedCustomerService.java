@@ -15,4 +15,7 @@ public interface MedCustomerService {
     List<MedCustomerDomain> selectByUserType(Integer userType);
 
     MedCustomerDomain saveMedCustomer(MedCustomerDomain medCustomerDomain) throws Exception;
+
+    MedCustomerDomain loginMedCustomer(MedCustomerDomain medCustomerDomain) throws Exception;
+
 }

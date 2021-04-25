@@ -5,7 +5,7 @@ CREATE TABLE `med_customer` (
   `root_id` bigint(11) DEFAULT '0' COMMENT '根节点id(非总根0节点)加盟商类型下使用',
   `user_name` varchar(128) NOT NULL COMMENT '用户名',
   `pwd_word` varchar(64) NOT NULL COMMENT '密码',
-  `status` tinyint(1) DEFAULT '0' COMMENT '状态 0-有效；1-无效',
+  `status` tinyint(1) DEFAULT '1' COMMENT '状态 1-有效；0-无效',
   `grade` int(4) DEFAULT NULL COMMENT '等级',
   `user_type` int(4) DEFAULT '0' COMMENT '用户类型 1-加盟商 0-普通用户',
   `child_lev` int(4) DEFAULT '2' COMMENT '下辖级别 加盟商可能超过2 系统参数为准，可手动修改',
@@ -16,7 +16,7 @@ CREATE TABLE `med_customer` (
   `ext_data` varchar(1000) DEFAULT NULL COMMENT '扩展数据',
   PRIMARY KEY (`id`),
   KEY `pid_idx` (`parent_id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=12226 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
 INSERT INTO `med_customer` VALUES ('1', null,  'root','med_root_user', '1',0,1,9999,null);
 INSERT INTO `med_customer` VALUES ('2', '1', 'join1', '2222', '1',1,1,5,null);

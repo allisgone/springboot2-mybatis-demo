@@ -1,8 +1,13 @@
 package com.winterchen.service.med.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.Query;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 import com.winterchen.dao.MedCustomerDao;
 import com.winterchen.dao.MedOrderDao;
 import com.winterchen.dao.MedSocreDao;
@@ -15,6 +20,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -161,4 +169,32 @@ public class MedOrderServiceImpl extends ServiceImpl<MedOrderDao, MedOrderDomain
         this.setParentSocre(orderId, socre, parent.getParentId(),loopTimes--);
     }
 
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public float medCustomerScore(String userName) throws Exception {
+        MedCustomerDomain exist = medCustomerDao.selectOne(new QueryWrapper<MedCustomerDomain>().eq("user_name", userName)
+                .eq("status", 1));
+        if (Objects.isNull(exist)) {
+            throw new Exception("用户不存在");
+        }
+        float sumCustomerSocre = medOrderDao.sumCustomerSocre(exist.getId());
+        exist.setSocre(sumCustomerSocre);
+        //更新积分显示
+        medCustomerDao.updateById(exist);
+        return sumCustomerSocre;
+    }
+
+    @Override
+    public IPage<MedSocreDomain> medCustomerScoreList(String userName, int page, int limit) throws Exception{
+        MedCustomerDomain exist = medCustomerDao.selectOne(new QueryWrapper<MedCustomerDomain>().eq("user_name", userName)
+                .eq("status", 1));
+        if (Objects.isNull(exist)) {
+            throw new Exception("用户不存在");
+        }
+        Map<String,Object> params = new HashMap<>();
+        params.put("page",page);
+        params.put("limit",limit);
+        return medSocreDao.selectPage(new Page<>(page,limit),new QueryWrapper<MedSocreDomain>().eq("customer_id",exist.getId()).orderByDesc("id"));
+    }
 }

@@ -17,7 +17,7 @@ import java.util.Date;
  * @date 2020-07-29 11:41:03
  */
 @Data
-@TableName("dictionary_item")
+@TableName("med_dictionary_item")
 public class DictionaryItemEntity implements Serializable {
 	private static final long serialVersionUID = 1L;
 
