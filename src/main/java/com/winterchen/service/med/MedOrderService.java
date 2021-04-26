@@ -20,5 +20,5 @@ public interface MedOrderService {
 
     float medCustomerScore(String userName) throws Exception;
 
-    IPage<MedSocreDomain> medCustomerScoreList(String userName, int page, int limit) throws Exception;
+    IPage<MedSocreDomain> medCustomerScoreList(String userName,String type, int page, int limit) throws Exception;
 }

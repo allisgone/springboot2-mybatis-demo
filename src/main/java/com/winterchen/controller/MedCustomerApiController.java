@@ -63,10 +63,11 @@ public class MedCustomerApiController {
     @GetMapping("/medCustomerScoreList")
     @ApiOperation(value = "用户积分查询", notes = "用户积分查询")
     public ReturnMsg<IPage<MedSocreDomain>> medCustomerScoreList(@RequestParam(name = "userName") String userName,
+                                                                 @RequestParam(name = "type") String type,
                                                                  @RequestParam(name = "page") int page,
                                                                  @RequestParam(name = "limit") int limit) throws Exception{
 
-        return new ReturnMsg<>(medOrderService.medCustomerScoreList(userName,page,limit));
+        return new ReturnMsg<>(medOrderService.medCustomerScoreList(userName,type,page,limit));
     }
 
 

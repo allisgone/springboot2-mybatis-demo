@@ -6,8 +6,6 @@ import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.github.pagehelper.PageHelper;
-import com.github.pagehelper.PageInfo;
 import com.winterchen.dao.MedCustomerDao;
 import com.winterchen.dao.MedOrderDao;
 import com.winterchen.dao.MedSocreDao;
@@ -20,9 +18,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -105,19 +100,21 @@ public class MedOrderServiceImpl extends ServiceImpl<MedOrderDao, MedOrderDomain
 
     @Transactional(rollbackFor = Exception.class)
     public MedSocreDomain reduceMedCustomerSocre(MedOrderDomain medOrderDomain) throws Exception {
-        if(Objects.isNull(medOrderDomain) || medOrderDomain.getSocre() < 0 ){
+        if(Objects.isNull(medOrderDomain) || medOrderDomain.getSocre() >= 0 ){
             throw new Exception("参数错误");
         }
         float sumCustomerSocre = medOrderDao.sumCustomerSocre(medOrderDomain.getCustomerId());
-        if(sumCustomerSocre < medOrderDomain.getSocre()){
-            throw new Exception("申请提取积分"+medOrderDomain.getSocre()+"超过实际积分"+sumCustomerSocre);
+        if(sumCustomerSocre < (-medOrderDomain.getSocre())){
+            throw new Exception("申请提取积分"+(-medOrderDomain.getSocre())+"超过实际积分"+sumCustomerSocre);
         }
+        Timestamp current = new Timestamp(System.currentTimeMillis());
         medOrderDomain.setStatus(0);
+        medOrderDomain.setCreateTime(current);
         this.save(medOrderDomain);
         MedSocreDomain medSocreDomain = new MedSocreDomain();
         //扣减为负数
-        medSocreDomain.setSocre(-medOrderDomain.getSocre());
-        medSocreDomain.setCreateTime(new Timestamp(System.currentTimeMillis()));
+        medSocreDomain.setSocre(medOrderDomain.getSocre());
+        medSocreDomain.setCreateTime(current);
         medSocreDomain.setCustomerId(medOrderDomain.getId());
         medSocreDomain.setRemark("提取分成");
         //提取需要审核通过才有效
@@ -186,15 +183,31 @@ public class MedOrderServiceImpl extends ServiceImpl<MedOrderDao, MedOrderDomain
     }
 
     @Override
-    public IPage<MedSocreDomain> medCustomerScoreList(String userName, int page, int limit) throws Exception{
+    public IPage<MedSocreDomain> medCustomerScoreList(String userName,String type,int page, int limit) throws Exception{
         MedCustomerDomain exist = medCustomerDao.selectOne(new QueryWrapper<MedCustomerDomain>().eq("user_name", userName)
                 .eq("status", 1));
         if (Objects.isNull(exist)) {
             throw new Exception("用户不存在");
         }
-        Map<String,Object> params = new HashMap<>();
-        params.put("page",page);
-        params.put("limit",limit);
-        return medSocreDao.selectPage(new Page<>(page,limit),new QueryWrapper<MedSocreDomain>().eq("customer_id",exist.getId()).orderByDesc("id"));
+        switch (type){
+            case "all":
+                return medSocreDao.selectPage(new Page<>(page,limit),new QueryWrapper<MedSocreDomain>().eq("customer_id",exist.getId())
+                        .orderByDesc("id"));
+            case "unapply":
+                return medSocreDao.selectPage(new Page<>(page,limit),new QueryWrapper<MedSocreDomain>().eq("customer_id",exist.getId())
+                        .eq("status",0).gt("socre",0).orderByDesc("id"));
+            case "apply":
+                return medSocreDao.selectPage(new Page<>(page,limit),new QueryWrapper<MedSocreDomain>().eq("customer_id",exist.getId())
+                        .eq("status",1).gt("socre",0).orderByDesc("id"));
+            case "reduceUnapply":
+                return medSocreDao.selectPage(new Page<>(page,limit),new QueryWrapper<MedSocreDomain>().eq("customer_id",exist.getId())
+                        .eq("status",0).lt("socre",0).orderByDesc("id"));
+            case "reduceApply":
+                return medSocreDao.selectPage(new Page<>(page,limit),new QueryWrapper<MedSocreDomain>().eq("customer_id",exist.getId())
+                        .eq("status",1).lt("socre",0).orderByDesc("id"));
+            default:
+                throw new Exception("未找到匹配类型");
+        }
+
     }
 }
