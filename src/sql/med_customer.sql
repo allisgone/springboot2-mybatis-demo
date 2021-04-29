@@ -15,8 +15,9 @@ CREATE TABLE `med_customer` (
   `create_time` timestamp NULL DEFAULT NULL COMMENT '创建时间',
   `ext_data` varchar(1000) DEFAULT NULL COMMENT '扩展数据',
   PRIMARY KEY (`id`),
+  UNIQUE KEY `user_name_idx` (`user_name`) USING BTREE,
   KEY `pid_idx` (`parent_id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=12241 DEFAULT CHARSET=utf8;
 
 INSERT INTO `med_customer` VALUES ('1', null,  'root','med_root_user', '1',0,1,9999,null);
 INSERT INTO `med_customer` VALUES ('2', '1', 'join1', '2222', '1',1,1,5,null);
@@ -60,7 +61,29 @@ CREATE TABLE `med_socre` (
   KEY `ind_order_id` (`order_id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+CREATE TABLE `med_image` (
+  `id` bigint(11) NOT NULL AUTO_INCREMENT,
+  `img_name` varchar(64) DEFAULT NULL,
+  `create_time` timestamp NULL DEFAULT NULL,
+  `content` mediumblob,
+  `content_type` varchar(32) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=latin1;
 
+CREATE TABLE `med_partner_store` (
+  `id` bigint(11) NOT NULL AUTO_INCREMENT,
+  `customer_id` bigint(11) NOT NULL,
+  `create_time` timestamp NULL DEFAULT NULL,
+  `address` varchar(255) DEFAULT NULL COMMENT '位置',
+  `phone` varchar(15) DEFAULT NULL COMMENT '手机号',
+  `tel` varchar(13) DEFAULT NULL COMMENT '座机',
+  `store_name` varchar(255) DEFAULT NULL COMMENT '店铺名',
+  `price` float(8,2) DEFAULT NULL COMMENT '消费均价',
+  `carousel` varchar(1000) DEFAULT NULL COMMENT '轮播图内容(json)',
+  `represent` varchar(2000) DEFAULT NULL COMMENT '描述',
+  `cate_id` int(5) DEFAULT NULL COMMENT '分类id',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `med_dictionary_classification` (
   `id` bigint(16) NOT NULL AUTO_INCREMENT COMMENT '主键ID',

@@ -23,19 +23,19 @@ public class MedAdminApiController {
     @ResponseBody
     @PostMapping("/agreeMedCustomerSocre")
     @ApiOperation(value = "同意积分申请", notes = "同意积分申请")
-    public ReturnMsg<MedOrderDomain> agreeMedCustomerSocre(@RequestBody MedOrderDomain medOrderDomain) {
+    public ReturnMsg<Boolean> agreeMedCustomerSocre(@RequestParam(name = "orderId", required = true) Long orderId) {
         try {
-            return new ReturnMsg<>(0,medOrderService.agreeMedCustomerSocre(medOrderDomain),null);
+            return new ReturnMsg<>(0,medOrderService.agreeMedCustomerSocre(orderId),null);
         } catch (Exception e) {
             return new ReturnMsg<>(-1,null, e.getMessage());
         }
     }
     @ResponseBody
-    @PostMapping("/rejectMedCustomerSocre")
+    @DeleteMapping("/rejectMedCustomerSocre")
     @ApiOperation(value = "拒绝积分申请", notes = "拒绝积分申请")
-    public ReturnMsg<MedOrderDomain> reduceMedCustomerSocre(@RequestBody MedOrderDomain medOrderDomain) {
+    public ReturnMsg<Boolean> reduceMedCustomerSocre(@RequestParam(name = "orderId", required = true) Long orderId) {
         try {
-            return new ReturnMsg<>(0,medOrderService.rejectMedCustomerSocre(medOrderDomain),null);
+            return new ReturnMsg<>(medOrderService.rejectMedCustomerSocre(orderId));
         } catch (Exception e) {
             return new ReturnMsg<>(-1,null, e.getMessage());
         }

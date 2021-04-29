@@ -1,6 +1,5 @@
 package com.winterchen.service.med.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.Query;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -35,7 +34,7 @@ public class MedOrderServiceImpl extends ServiceImpl<MedOrderDao, MedOrderDomain
     @Autowired
     private MedOrderDao medOrderDao;
 
-
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public MedSocreDomain addMedCustomerSocre(MedOrderDomain medOrderDomain) throws Exception {
         MedCustomerDomain currentUser = medCustomerDao.selectOne(new QueryWrapper<MedCustomerDomain>()
@@ -83,21 +82,24 @@ public class MedOrderServiceImpl extends ServiceImpl<MedOrderDao, MedOrderDomain
         return medSocreDomain;
     }
 
+    @Override
     @Transactional(rollbackFor = Exception.class)
-    public MedOrderDomain agreeMedCustomerSocre(MedOrderDomain medOrderDomain) throws Exception {
-        MedCustomerDomain currentUser = medCustomerDao.selectOne(new QueryWrapper<MedCustomerDomain>()
-                .eq("id", medOrderDomain.getCustomerId()).eq("status", 1));
-        if (Objects.isNull(currentUser)) {
-            throw new Exception("未找到用户");
+    public boolean agreeMedCustomerSocre(Long orderId) throws Exception {
+        MedOrderDomain exist = this.getById(orderId);
+        if(Objects.isNull(exist)){
+            throw new Exception("未找到记录");
+        }
+        if(exist.getStatus() != 0){
+            throw new Exception("不是申请状态");
         }
         MedSocreDomain needUpdate = new MedSocreDomain();
         needUpdate.setStatus(1);
-        medSocreDao.update(needUpdate,new UpdateWrapper<MedSocreDomain>().eq("order_id",medOrderDomain.getId()).eq("status",0));
-        medOrderDomain.setStatus(1);
-        medOrderDao.updateById(medOrderDomain);
-        return medOrderDomain;
+        medSocreDao.update(needUpdate,new UpdateWrapper<MedSocreDomain>().eq("order_id",orderId).eq("status",0));
+        exist.setStatus(1);
+        return medOrderDao.updateById(exist) == 1;
     }
 
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public MedSocreDomain reduceMedCustomerSocre(MedOrderDomain medOrderDomain) throws Exception {
         if(Objects.isNull(medOrderDomain) || medOrderDomain.getSocre() >= 0 ){
@@ -124,20 +126,46 @@ public class MedOrderServiceImpl extends ServiceImpl<MedOrderDao, MedOrderDomain
         return medSocreDomain;
     }
 
-
+    @Override
     @Transactional(rollbackFor = Exception.class)
-    public MedOrderDomain rejectMedCustomerSocre(MedOrderDomain medOrderDomain) throws Exception {
-        MedCustomerDomain currentUser = medCustomerDao.selectOne(new QueryWrapper<MedCustomerDomain>()
-                .eq("id", medOrderDomain.getCustomerId()).eq("status", 1));
-        if (Objects.isNull(currentUser)) {
-            throw new Exception("未找到用户");
+    public MedOrderDomain reduceMedCustomerSocreConfirm(Long orderId) throws Exception {
+        if(Objects.isNull(orderId) ){
+            throw new Exception("参数错误");
         }
+        MedOrderDomain exist = this.getById(orderId);
+        if(Objects.isNull(exist)){
+            throw new Exception("未找到记录");
+        }
+        if(exist.getStatus() != 2){
+            throw new Exception("不是抵扣未确认申请");
+        }
+        float sumCustomerSocre = medOrderDao.sumCustomerSocre(exist.getCustomerId());
+        if(sumCustomerSocre < (-exist.getSocre())){
+            throw new Exception("申请提取积分"+(-exist.getSocre())+"超过实际积分"+sumCustomerSocre);
+        }
+        //改成确认申请
+        exist.setStatus(0);
+        this.updateById(exist);
         MedSocreDomain needUpdate = new MedSocreDomain();
-        needUpdate.setStatus(2);
-        medSocreDao.update(needUpdate,new UpdateWrapper<MedSocreDomain>().eq("order_id",medOrderDomain.getId()).eq("status",0));
-        medOrderDomain.setStatus(2);
-        medOrderDao.updateById(medOrderDomain);
-        return medOrderDomain;
+        needUpdate.setStatus(0);
+        medSocreDao.update(needUpdate,new UpdateWrapper<MedSocreDomain>().eq("order_id",exist.getId()).eq("status",2));
+        return exist;
+    }
+
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean rejectMedCustomerSocre(Long orderId) throws Exception {
+        MedOrderDomain exist = this.getById(orderId);
+        if(Objects.isNull(exist)){
+            throw new Exception("未找到记录");
+        }
+        if(exist.getStatus() != 0){
+            throw new Exception("不是申请状态");
+        }
+        //拒绝后就直接删除掉
+        medSocreDao.delete(new QueryWrapper<MedSocreDomain>().eq("order_id", exist.getId()));
+        return this.removeById(orderId);
     }
 
     private void setParentSocre(Long orderId,float socre,Long parentId,int loopTimes){
@@ -199,6 +227,9 @@ public class MedOrderServiceImpl extends ServiceImpl<MedOrderDao, MedOrderDomain
             case "apply":
                 return medSocreDao.selectPage(new Page<>(page,limit),new QueryWrapper<MedSocreDomain>().eq("customer_id",exist.getId())
                         .eq("status",1).gt("socre",0).orderByDesc("id"));
+            case "reduceUncheck":
+                return medSocreDao.selectPage(new Page<>(page,limit),new QueryWrapper<MedSocreDomain>().eq("customer_id",exist.getId())
+                        .eq("status",2).lt("socre",0).orderByDesc("id"));
             case "reduceUnapply":
                 return medSocreDao.selectPage(new Page<>(page,limit),new QueryWrapper<MedSocreDomain>().eq("customer_id",exist.getId())
                         .eq("status",0).lt("socre",0).orderByDesc("id"));
@@ -209,5 +240,10 @@ public class MedOrderServiceImpl extends ServiceImpl<MedOrderDao, MedOrderDomain
                 throw new Exception("未找到匹配类型");
         }
 
+    }
+
+    @Override
+    public MedOrderDomain getByOrderId(Long id) {
+        return this.getById(id);
     }
 }

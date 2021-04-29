@@ -84,4 +84,18 @@ public class MedCustomerServiceImpl  extends ServiceImpl<MedCustomerDao, MedCust
         exist.setPwdWord(null);
         return exist;
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public MedCustomerDomain medCustomerSet(MedCustomerDomain medCustomerDomain) throws Exception{
+        MedCustomerDomain exist = this.getOne(new QueryWrapper<MedCustomerDomain>().eq("user_name", medCustomerDomain.getUserName())
+                .eq("status", 1));
+        if (Objects.isNull(exist)) {
+            throw new Exception("用户不存在");
+        }
+        exist.setExtData(medCustomerDomain.getExtData());
+        this.updateById(exist);
+        exist.setPwdWord(null);
+        return exist;
+    }
 }

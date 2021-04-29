@@ -45,19 +45,40 @@ public class MedCustomerApiController {
     @GetMapping("/loginMedCustomer")
     @ApiOperation(value = "登录用户", notes = "登录用户")
     public ReturnMsg<MedCustomerDomain> loginMedCustomer(@RequestParam(name = "userName") String userName,
-                                                         @RequestParam(name = "pwdWord") String pwdWord) throws Exception{
+                                                         @RequestParam(name = "pwdWord") String pwdWord){
             MedCustomerDomain medCustomerDomain = new MedCustomerDomain();
             medCustomerDomain.setUserName(userName);
             medCustomerDomain.setPwdWord(pwdWord);
-            return new ReturnMsg<>(medCustomerService.loginMedCustomer(medCustomerDomain));
+            try {
+                return new ReturnMsg<>(medCustomerService.loginMedCustomer(medCustomerDomain));
+            } catch (Exception e) {
+                return new ReturnMsg<>(-1,null, e.getMessage());
+            }
     }
 
     @GetMapping("/medCustomerScore")
     @ApiOperation(value = "用户总积分查询", notes = "用户总积分查询")
-    public ReturnMsg<Float> medCustomerScore(@RequestParam(name = "userName") String userName) throws Exception{
+    public ReturnMsg<Float> medCustomerScore(@RequestParam(name = "userName") String userName) {
         MedCustomerDomain medCustomerDomain = new MedCustomerDomain();
         medCustomerDomain.setUserName(userName);
-        return new ReturnMsg<>(medOrderService.medCustomerScore(userName));
+
+        try {
+            return new ReturnMsg<>(medOrderService.medCustomerScore(userName));
+        } catch (Exception e) {
+            return new ReturnMsg<>(-1,null, e.getMessage());
+        }
+    }
+
+    @ResponseBody
+    @PostMapping("/medCustomerSet")
+    @ApiOperation(value = "用户设置", notes = "用户设置")
+    public ReturnMsg<MedCustomerDomain> medCustomerSet(@RequestBody MedCustomerDomain medCustomerDomain) {
+
+        try {
+            return new ReturnMsg<>(medCustomerService.medCustomerSet(medCustomerDomain));
+        } catch (Exception e) {
+            return new ReturnMsg<>(-1,null, e.getMessage());
+        }
     }
 
     @GetMapping("/medCustomerScoreList")
@@ -65,9 +86,13 @@ public class MedCustomerApiController {
     public ReturnMsg<IPage<MedSocreDomain>> medCustomerScoreList(@RequestParam(name = "userName") String userName,
                                                                  @RequestParam(name = "type") String type,
                                                                  @RequestParam(name = "page") int page,
-                                                                 @RequestParam(name = "limit") int limit) throws Exception{
+                                                                 @RequestParam(name = "limit") int limit){
 
-        return new ReturnMsg<>(medOrderService.medCustomerScoreList(userName,type,page,limit));
+        try {
+            return new ReturnMsg<>(medOrderService.medCustomerScoreList(userName,type,page,limit));
+        } catch (Exception e) {
+            return new ReturnMsg<>(-1,null, e.getMessage());
+        }
     }
 
 
@@ -100,6 +125,21 @@ public class MedCustomerApiController {
         }
     }
 
+    @GetMapping("/selectOrderById")
+    @ApiOperation(value = "依据id获取抵扣申请", notes = "依据id获取抵申请")
+    public ReturnMsg<MedOrderDomain> selectOrderById(@RequestParam(name = "orderId", required = true) Long orderId){
+        return new ReturnMsg<>(medOrderService.getByOrderId(orderId));
+    }
+
+    @PutMapping("/reduceMedCustomerSocreConfirm")
+    @ApiOperation(value = "确认加盟商抵扣申请信息", notes = "确认加盟商抵扣申请信息")
+    public ReturnMsg<MedOrderDomain> reduceMedCustomerSocreConfirm(@RequestParam(name = "orderId", required = true) Long orderId){
+        try {
+            return new ReturnMsg<>(medOrderService.reduceMedCustomerSocreConfirm(orderId));
+        } catch (Exception e) {
+            return new ReturnMsg<>(-1,null, e.getMessage());
+        }
+    }
 
     @RequestMapping(value = "/{qrContent}/{backgroundUrl}/{size}/{positionX}/{positionY}/get.png",method = RequestMethod.GET,produces = MediaType.IMAGE_JPEG_VALUE)
     @ApiOperation(value = "海报生成接口-输出图片.png")
