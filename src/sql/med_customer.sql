@@ -68,7 +68,7 @@ CREATE TABLE `med_image` (
   `content` mediumblob,
   `content_type` varchar(32) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `med_partner_store` (
   `id` bigint(11) NOT NULL AUTO_INCREMENT,
@@ -77,13 +77,16 @@ CREATE TABLE `med_partner_store` (
   `address` varchar(255) DEFAULT NULL COMMENT '位置',
   `phone` varchar(15) DEFAULT NULL COMMENT '手机号',
   `tel` varchar(13) DEFAULT NULL COMMENT '座机',
+  `store_img` varchar(255) DEFAULT NULL COMMENT '店铺首页',
   `store_name` varchar(255) DEFAULT NULL COMMENT '店铺名',
   `price` float(8,2) DEFAULT NULL COMMENT '消费均价',
   `carousel` varchar(1000) DEFAULT NULL COMMENT '轮播图内容(json)',
   `represent` varchar(2000) DEFAULT NULL COMMENT '描述',
   `cate_id` int(5) DEFAULT NULL COMMENT '分类id',
+  `latitude` float(10,7) DEFAULT '0.0000000',
+  `longitude` float(10,7) DEFAULT '0.0000000',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `med_dictionary_classification` (
   `id` bigint(16) NOT NULL AUTO_INCREMENT COMMENT '主键ID',

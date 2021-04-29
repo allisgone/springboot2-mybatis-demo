@@ -23,6 +23,8 @@ public class MedPartnerStoreDomain {
 
     private String storeName;
 
+    private String storeImg;
+
     private float price;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
@@ -34,4 +36,7 @@ public class MedPartnerStoreDomain {
 
     private int cateId;
 
+    private float latitude;
+
+    private float longitude;
 }

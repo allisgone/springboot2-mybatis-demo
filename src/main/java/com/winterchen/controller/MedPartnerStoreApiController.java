@@ -1,6 +1,7 @@
 package com.winterchen.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.winterchen.model.MedCustomerDomain;
 import com.winterchen.model.MedPartnerStoreDomain;
 import com.winterchen.model.ReturnMsg;
@@ -35,7 +36,7 @@ public class MedPartnerStoreApiController {
         if (medPartnerStoreDomain == null) {
             return new ReturnMsg<>(-1,null,"数据为空");
         }
-        MedCustomerDomain exist = medCustomerService.getOne(new QueryWrapper<MedCustomerDomain>().eq("user_name", medPartnerStoreDomain.getCustomerId())
+        MedCustomerDomain exist = medCustomerService.getOne(new QueryWrapper<MedCustomerDomain>().eq("id", medPartnerStoreDomain.getCustomerId())
                 .eq("status", 1)
         .eq("user_type",1));
         if (Objects.isNull(exist)) {
@@ -60,5 +61,18 @@ public class MedPartnerStoreApiController {
     @ApiOperation(value = "加盟商店铺信息", notes = "加盟商店铺信息")
     public ReturnMsg<MedPartnerStoreDomain> getStoreByCustomId(@RequestParam(name = "customerId") Long customerId){
         return new ReturnMsg<>(medPartnerStoreService.getOne(new QueryWrapper<MedPartnerStoreDomain>().eq("customer_id", customerId)));
+    }
+
+    @GetMapping("/medPartnerStoreList")
+    @ApiOperation(value = "商家店铺分页查询", notes = "商家店铺分页查询")
+    public ReturnMsg<IPage<MedPartnerStoreDomain>> medPartnerStoreList(@RequestParam(name = "storeName") String storeName,
+                                                                 @RequestParam(name = "cateId") int cateId,
+                                                                 @RequestParam(name = "page") int page,
+                                                                 @RequestParam(name = "limit") int limit){
+        try {
+            return new ReturnMsg<>(medPartnerStoreService.medPartnerStoreList(storeName,cateId,page,limit));
+        } catch (Exception e) {
+            return new ReturnMsg<>(-1,null, e.getMessage());
+        }
     }
 }

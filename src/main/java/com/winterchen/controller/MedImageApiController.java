@@ -13,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.sql.Timestamp;
+import java.util.UUID;
 
 /**
  * Created by Administrator on 2017/8/16.
@@ -37,7 +38,7 @@ public class MedImageApiController {
         try {
             medImageDomain.setContentType(pic.getContentType());
             medImageDomain.setCreateTime(new Timestamp(System.currentTimeMillis()));
-            medImageDomain.setImgName(pic.getOriginalFilename());
+            medImageDomain.setImgName(UUID.randomUUID().toString()+pic.getOriginalFilename().substring(pic.getOriginalFilename().lastIndexOf(".")));
             medImageDomain.setContent(pic.getBytes());
             medImageService.saveImage(medImageDomain);
         } catch (Exception e) {
