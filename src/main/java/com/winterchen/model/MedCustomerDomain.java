@@ -1,5 +1,6 @@
 package com.winterchen.model;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -19,7 +20,8 @@ public class MedCustomerDomain {
 
     private String userName;
 
-    private String pwdWord;
+    @TableField(exist = false)
+    private String smsCode;
 
     private boolean status = true;
 

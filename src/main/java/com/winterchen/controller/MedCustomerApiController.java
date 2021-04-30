@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.winterchen.model.*;
 import com.winterchen.service.med.MedCustomerService;
 import com.winterchen.service.med.MedOrderService;
+import com.winterchen.service.med.MedSmsCodeService;
 import com.winterchen.utils.ZXingBackGroundUtils;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -30,6 +31,19 @@ public class MedCustomerApiController {
     private MedCustomerService medCustomerService;
     @Autowired
     private MedOrderService medOrderService;
+    @Autowired
+    private MedSmsCodeService medSmsCodeService;
+
+    @ResponseBody
+    @GetMapping("/sendSms")
+    @ApiOperation(value = "发送短信验证码", notes = "发送短信验证码")
+    public ReturnMsg<MedSmsCodeDomain> sendSms(@RequestParam(name = "phone") String phone,@RequestParam(name = "sendType") int sendType){
+        try {
+            return new ReturnMsg<>(medSmsCodeService.send(phone,sendType));
+        } catch (Exception e) {
+            return new ReturnMsg<>(-1,null, e.getMessage());
+        }
+    }
 
     @ResponseBody
     @PostMapping("/saveMedCustomer")
@@ -45,10 +59,10 @@ public class MedCustomerApiController {
     @GetMapping("/loginMedCustomer")
     @ApiOperation(value = "登录用户", notes = "登录用户")
     public ReturnMsg<MedCustomerDomain> loginMedCustomer(@RequestParam(name = "userName") String userName,
-                                                         @RequestParam(name = "pwdWord") String pwdWord){
+                                                         @RequestParam(name = "smsCode") String smsCode){
             MedCustomerDomain medCustomerDomain = new MedCustomerDomain();
             medCustomerDomain.setUserName(userName);
-            medCustomerDomain.setPwdWord(pwdWord);
+            medCustomerDomain.setSmsCode(smsCode);
             try {
                 return new ReturnMsg<>(medCustomerService.loginMedCustomer(medCustomerDomain));
             } catch (Exception e) {

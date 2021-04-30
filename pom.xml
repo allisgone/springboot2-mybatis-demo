@@ -164,7 +164,17 @@
 			<artifactId>fastjson</artifactId>
 			<version>1.2.60</version>
 		</dependency>
-
+		<!--阿里云短信sdk-->
+		<dependency>
+			<groupId>com.aliyun</groupId>
+			<artifactId>aliyun-java-sdk-core</artifactId>
+			<version>4.5.2</version>
+		</dependency>
+		<dependency>
+			<groupId>com.aliyun</groupId>
+			<artifactId>aliyun-java-sdk-dysmsapi</artifactId>
+			<version>1.0.0</version>
+		</dependency>
 		<!--QrCode-->
 		<dependency>
 			<groupId>com.google.zxing</groupId>

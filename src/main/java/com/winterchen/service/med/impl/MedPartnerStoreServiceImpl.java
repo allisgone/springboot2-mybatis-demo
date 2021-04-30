@@ -24,7 +24,7 @@ public class MedPartnerStoreServiceImpl extends ServiceImpl<MedPartnerStoreDao, 
     @Override
     public IPage<MedPartnerStoreDomain> medPartnerStoreList(String storeName, int cateId, int page, int limit){
         return medPartnerStoreDao.selectPage(new Page<>(page, limit),
-                new QueryWrapper<MedPartnerStoreDomain>().like(StringUtils.isNotBlank(storeName),"store_name", storeName).eq(limit > -1,"cate_id", cateId));
+                new QueryWrapper<MedPartnerStoreDomain>().like(StringUtils.isNotBlank(storeName),"store_name", storeName).eq(cateId > -1,"cate_id", cateId));
     }
 
 }

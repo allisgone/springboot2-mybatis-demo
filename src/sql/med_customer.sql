@@ -4,7 +4,6 @@ CREATE TABLE `med_customer` (
   `parent_id` bigint(11) DEFAULT NULL COMMENT '父节点id',
   `root_id` bigint(11) DEFAULT '0' COMMENT '根节点id(非总根0节点)加盟商类型下使用',
   `user_name` varchar(128) NOT NULL COMMENT '用户名',
-  `pwd_word` varchar(64) NOT NULL COMMENT '密码',
   `status` tinyint(1) DEFAULT '1' COMMENT '状态 1-有效；0-无效',
   `grade` int(4) DEFAULT NULL COMMENT '等级',
   `user_type` int(4) DEFAULT '0' COMMENT '用户类型 1-加盟商 0-普通用户',
@@ -17,7 +16,7 @@ CREATE TABLE `med_customer` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `user_name_idx` (`user_name`) USING BTREE,
   KEY `pid_idx` (`parent_id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=12241 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
 INSERT INTO `med_customer` VALUES ('1', null,  'root','med_root_user', '1',0,1,9999,null);
 INSERT INTO `med_customer` VALUES ('2', '1', 'join1', '2222', '1',1,1,5,null);
@@ -109,3 +108,13 @@ CREATE TABLE `med_dictionary_item` (
   `status` bigint(1) DEFAULT NULL COMMENT '有效性(0：失效,1：有效)',
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC COMMENT='字典项';
+
+#短信发送
+CREATE TABLE `med_sms_code` (
+  `id` bigint(11) NOT NULL AUTO_INCREMENT,
+  `phone` varchar(15) NOT NULL,
+  `send_type` tinyint(1) not null,
+  `create_time` timestamp NULL DEFAULT NULL,
+  `sms_code` varchar(8) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
