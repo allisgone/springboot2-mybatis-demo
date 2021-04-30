@@ -36,10 +36,10 @@ public class MedSmsCodeServiceImpl extends ServiceImpl<MedSmsCodeDao, MedSmsCode
 
     private static final String sign = "阳光会员";
     // 开发者akID
-    private static final String accessKeyId = "LTAI4GGrLqfXqdzSn6C3jAcx";
+    private static final String accessKeyId = "";
 
     //开发者ak秘钥
-    private static final String accessKeySecret = "9zKwomlpio7QxlpfIsJOztktV5u0XV";
+    private static final String accessKeySecret = "";
     /**
      * 发送短信
      *
