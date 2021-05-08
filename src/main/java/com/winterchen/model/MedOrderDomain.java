@@ -14,7 +14,10 @@ public class MedOrderDomain {
     private Long id;
 
     private Long customerId;
-    //状态 0-申请；1-有效；2-无效
+
+    private Long targetId;
+
+    //状态 0-申请；1-加盟商确认 2-有效；3-无效
     private int status;
 
     private float socre;

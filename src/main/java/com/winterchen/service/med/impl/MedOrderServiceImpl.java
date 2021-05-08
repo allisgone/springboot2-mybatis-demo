@@ -59,7 +59,7 @@ public class MedOrderServiceImpl extends ServiceImpl<MedOrderDao, MedOrderDomain
         medSocreDao.insert(medSocreDomain);
 
         //todo 设置为系统参数
-        int loopTimes =2;
+        int loopTimes = 3;
         //设置关联的等级分成
         this.setParentSocre(medOrderDomain.getId(),medOrderDomain.getSocre(),currentUser.getParentId(),loopTimes);
         //设置代理人分成
@@ -99,16 +99,35 @@ public class MedOrderServiceImpl extends ServiceImpl<MedOrderDao, MedOrderDomain
         return medOrderDao.updateById(exist) == 1;
     }
 
+    /**
+     * 场景
+     * C端用户抵扣积分到加盟商消费
+     * 加盟商和代理人积分提现
+     * @param medOrderDomain
+     * @return
+     * @throws Exception
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public MedSocreDomain reduceMedCustomerSocre(MedOrderDomain medOrderDomain) throws Exception {
-        if(Objects.isNull(medOrderDomain) || medOrderDomain.getSocre() >= 0 ){
+        if(Objects.isNull(medOrderDomain) || medOrderDomain.getSocre() <= 0 ){
             throw new Exception("参数错误");
         }
         float sumCustomerSocre = medOrderDao.sumCustomerSocre(medOrderDomain.getCustomerId());
         if(sumCustomerSocre < (-medOrderDomain.getSocre())){
             throw new Exception("申请提取积分"+(-medOrderDomain.getSocre())+"超过实际积分"+sumCustomerSocre);
         }
+        MedCustomerDomain currentUser = medCustomerDao.selectOne(new QueryWrapper<MedCustomerDomain>()
+                .eq("id",medOrderDomain.getCustomerId()).eq("status", 1));
+        if(Objects.isNull(currentUser)){
+            throw new Exception("未找到用户");
+        }
+        MedCustomerDomain targetUser = medCustomerDao.selectOne(new QueryWrapper<MedCustomerDomain>()
+                .eq("id",medOrderDomain.getTargetId()).eq("status", 1).eq("user_type", 1));
+        if(Objects.isNull(targetUser)){
+            throw new Exception("未找到加盟商");
+        }
+
         Timestamp current = new Timestamp(System.currentTimeMillis());
         medOrderDomain.setStatus(0);
         medOrderDomain.setCreateTime(current);
@@ -117,18 +136,36 @@ public class MedOrderServiceImpl extends ServiceImpl<MedOrderDao, MedOrderDomain
         //扣减为负数
         medSocreDomain.setSocre(medOrderDomain.getSocre());
         medSocreDomain.setCreateTime(current);
-        medSocreDomain.setCustomerId(medOrderDomain.getId());
-        medSocreDomain.setRemark("提取分成");
+        medSocreDomain.setCustomerId(medOrderDomain.getCustomerId());
+        medSocreDomain.setRemark("积分抵扣或者提现");
         //提取需要审核通过才有效
         medSocreDomain.setStatus(0);
         medSocreDomain.setOrderId(medOrderDomain.getId());
         medSocreDao.insert(medSocreDomain);
+
+        MedSocreDomain medTargetSocreDomain = new MedSocreDomain();
+        medTargetSocreDomain.setSocre(-medOrderDomain.getSocre());
+        medTargetSocreDomain.setCreateTime(current);
+        medTargetSocreDomain.setCustomerId(medOrderDomain.getTargetId());
+        medTargetSocreDomain.setRemark("增加积分");
+        //提取需要审核通过才有效
+        medTargetSocreDomain.setStatus(0);
+        medTargetSocreDomain.setOrderId(medOrderDomain.getId());
+        medSocreDao.insert(medTargetSocreDomain);
         return medSocreDomain;
     }
 
+    /**
+     * 场景
+     * C端用户抵扣积分到加盟商消费，加盟商审核确认
+     * 加盟商和代理人积分提现，系统审核确认
+     * @param orderId
+     * @return
+     * @throws Exception
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public MedOrderDomain reduceMedCustomerSocreConfirm(Long orderId) throws Exception {
+    public MedOrderDomain reduceMedCustomerSocreConfirm(Long orderId,Long targetId) throws Exception {
         if(Objects.isNull(orderId) ){
             throw new Exception("参数错误");
         }
@@ -136,36 +173,48 @@ public class MedOrderServiceImpl extends ServiceImpl<MedOrderDao, MedOrderDomain
         if(Objects.isNull(exist)){
             throw new Exception("未找到记录");
         }
-        if(exist.getStatus() != 2){
-            throw new Exception("不是抵扣未确认申请");
+        if(exist.getStatus() != 0){
+            throw new Exception("不是申请状态");
+        }
+        if(!Objects.equals(targetId,exist.getTargetId())){
+            throw new Exception("不是您的审核订单");
         }
         float sumCustomerSocre = medOrderDao.sumCustomerSocre(exist.getCustomerId());
         if(sumCustomerSocre < (-exist.getSocre())){
             throw new Exception("申请提取积分"+(-exist.getSocre())+"超过实际积分"+sumCustomerSocre);
         }
         //改成确认申请
-        exist.setStatus(0);
+        exist.setStatus(1);
         this.updateById(exist);
+        //更改积分状态
         MedSocreDomain needUpdate = new MedSocreDomain();
-        needUpdate.setStatus(0);
-        medSocreDao.update(needUpdate,new UpdateWrapper<MedSocreDomain>().eq("order_id",exist.getId()).eq("status",2));
+        needUpdate.setStatus(1);
+        medSocreDao.update(needUpdate,new UpdateWrapper<MedSocreDomain>().eq("order_id",exist.getId()).eq("status",0));
         return exist;
     }
 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public boolean rejectMedCustomerSocre(Long orderId) throws Exception {
+    public MedOrderDomain rejectMedCustomerSocre(Long orderId,Long targetId) throws Exception {
+        if(Objects.isNull(orderId) ){
+            throw new Exception("参数错误");
+        }
         MedOrderDomain exist = this.getById(orderId);
         if(Objects.isNull(exist)){
             throw new Exception("未找到记录");
         }
+        if(!Objects.equals(targetId,exist.getTargetId())){
+            throw new Exception("不是您的审核订单");
+        }
         if(exist.getStatus() != 0){
             throw new Exception("不是申请状态");
         }
-        //拒绝后就直接删除掉
-        medSocreDao.delete(new QueryWrapper<MedSocreDomain>().eq("order_id", exist.getId()));
-        return this.removeById(orderId);
+        //拒绝订单状态为2
+        exist.setStatus(2);
+        this.updateById(exist);
+        //由于申请的时候积分状态本来就是无效的 故不需要修改积分记录
+        return exist;
     }
 
     private void setParentSocre(Long orderId,float socre,Long parentId,int loopTimes){
@@ -211,7 +260,7 @@ public class MedOrderServiceImpl extends ServiceImpl<MedOrderDao, MedOrderDomain
     }
 
     @Override
-    public IPage<MedSocreDomain> medCustomerScoreList(String userName,String type,int page, int limit) throws Exception{
+    public IPage<MedOrderDomain> medCustomerOrderPageList(String userName,String type,int page, int limit) throws Exception{
         MedCustomerDomain exist = medCustomerDao.selectOne(new QueryWrapper<MedCustomerDomain>().eq("user_name", userName)
                 .eq("status", 1));
         if (Objects.isNull(exist)) {
@@ -219,23 +268,25 @@ public class MedOrderServiceImpl extends ServiceImpl<MedOrderDao, MedOrderDomain
         }
         switch (type){
             case "all":
-                return medSocreDao.selectPage(new Page<>(page,limit),new QueryWrapper<MedSocreDomain>().eq("customer_id",exist.getId())
+                //所有
+                return medOrderDao.selectPage(new Page<>(page,limit),new QueryWrapper<MedOrderDomain>().and(w->w.eq("customer_id",exist.getId())
+                        .or().eq("target_id",exist.getId()))
                         .orderByDesc("id"));
             case "unapply":
-                return medSocreDao.selectPage(new Page<>(page,limit),new QueryWrapper<MedSocreDomain>().eq("customer_id",exist.getId())
-                        .eq("status",0).gt("socre",0).orderByDesc("id"));
+                //未审核
+                return medOrderDao.selectPage(new Page<>(page,limit),new QueryWrapper<MedOrderDomain>().and(w->w.eq("customer_id",exist.getId())
+                        .or().eq("target_id",exist.getId())).eq("status",0)
+                        .orderByDesc("id"));
             case "apply":
-                return medSocreDao.selectPage(new Page<>(page,limit),new QueryWrapper<MedSocreDomain>().eq("customer_id",exist.getId())
-                        .eq("status",1).gt("socre",0).orderByDesc("id"));
-            case "reduceUncheck":
-                return medSocreDao.selectPage(new Page<>(page,limit),new QueryWrapper<MedSocreDomain>().eq("customer_id",exist.getId())
-                        .eq("status",2).lt("socre",0).orderByDesc("id"));
-            case "reduceUnapply":
-                return medSocreDao.selectPage(new Page<>(page,limit),new QueryWrapper<MedSocreDomain>().eq("customer_id",exist.getId())
-                        .eq("status",0).lt("socre",0).orderByDesc("id"));
-            case "reduceApply":
-                return medSocreDao.selectPage(new Page<>(page,limit),new QueryWrapper<MedSocreDomain>().eq("customer_id",exist.getId())
-                        .eq("status",1).lt("socre",0).orderByDesc("id"));
+                //审核通过
+                return medOrderDao.selectPage(new Page<>(page,limit),new QueryWrapper<MedOrderDomain>().and(w->w.eq("customer_id",exist.getId())
+                        .or().eq("target_id",exist.getId())).eq("status",1)
+                        .orderByDesc("id"));
+            case "unpass":
+                //审核不通过
+                return medOrderDao.selectPage(new Page<>(page,limit),new QueryWrapper<MedOrderDomain>().and(w->w.eq("customer_id",exist.getId())
+                        .or().eq("target_id",exist.getId())).eq("status",2)
+                        .orderByDesc("id"));
             default:
                 throw new Exception("未找到匹配类型");
         }

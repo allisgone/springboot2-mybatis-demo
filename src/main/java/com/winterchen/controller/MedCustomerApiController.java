@@ -1,10 +1,12 @@
 package com.winterchen.controller;
 
+import com.alibaba.fastjson.JSONArray;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.winterchen.model.*;
 import com.winterchen.service.med.MedCustomerService;
 import com.winterchen.service.med.MedOrderService;
 import com.winterchen.service.med.MedSmsCodeService;
+import com.winterchen.utils.GetCurrentUser;
 import com.winterchen.utils.ZXingBackGroundUtils;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.imageio.ImageIO;
 import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.awt.image.BufferedImage;
 import java.net.URLDecoder;
@@ -72,12 +75,9 @@ public class MedCustomerApiController {
 
     @GetMapping("/medCustomerScore")
     @ApiOperation(value = "用户总积分查询", notes = "用户总积分查询")
-    public ReturnMsg<Float> medCustomerScore(@RequestParam(name = "userName") String userName) {
-        MedCustomerDomain medCustomerDomain = new MedCustomerDomain();
-        medCustomerDomain.setUserName(userName);
-
+    public ReturnMsg<Float> medCustomerScore(HttpServletRequest request) {
         try {
-            return new ReturnMsg<>(medOrderService.medCustomerScore(userName));
+            return new ReturnMsg<>(medOrderService.medCustomerScore(GetCurrentUser.convertFormRequest(request).getUserName()));
         } catch (Exception e) {
             return new ReturnMsg<>(-1,null, e.getMessage());
         }
@@ -86,24 +86,23 @@ public class MedCustomerApiController {
     @ResponseBody
     @PostMapping("/medCustomerSet")
     @ApiOperation(value = "用户设置", notes = "用户设置")
-    public ReturnMsg<MedCustomerDomain> medCustomerSet(@RequestBody MedCustomerDomain medCustomerDomain) {
+    public ReturnMsg<MedCustomerDomain> medCustomerSet(HttpServletRequest request, @RequestBody MedCustomerDomain medCustomerDomain) {
 
         try {
+            medCustomerDomain.setId(GetCurrentUser.convertFormRequest(request).getId());
             return new ReturnMsg<>(medCustomerService.medCustomerSet(medCustomerDomain));
         } catch (Exception e) {
             return new ReturnMsg<>(-1,null, e.getMessage());
         }
     }
 
-    @GetMapping("/medCustomerScoreList")
-    @ApiOperation(value = "用户积分查询", notes = "用户积分查询")
-    public ReturnMsg<IPage<MedSocreDomain>> medCustomerScoreList(@RequestParam(name = "userName") String userName,
-                                                                 @RequestParam(name = "type") String type,
+    @GetMapping("/medCustomerOrderPageList")
+    @ApiOperation(value = "用户积分订单列表查询", notes = "用户积分订单列表查询")
+    public ReturnMsg<IPage<MedOrderDomain>> medCustomerOrderPageList(HttpServletRequest request,@RequestParam(name = "type") String type,
                                                                  @RequestParam(name = "page") int page,
                                                                  @RequestParam(name = "limit") int limit){
-
         try {
-            return new ReturnMsg<>(medOrderService.medCustomerScoreList(userName,type,page,limit));
+            return new ReturnMsg<>(medOrderService.medCustomerOrderPageList(GetCurrentUser.convertFormRequest(request).getUserName(),type,page,limit));
         } catch (Exception e) {
             return new ReturnMsg<>(-1,null, e.getMessage());
         }
@@ -113,26 +112,39 @@ public class MedCustomerApiController {
     @ResponseBody
     @GetMapping("/selectCustomerLev")
     @ApiOperation(value = "依据id获取下面的等级信息", notes = "依据id获取下面的等级信息")
-    public List<Map> selectCustomerLev(@RequestParam(name = "userId", required = true) Long userId){
-        List<Map> medCustomer = medCustomerService.selectCustomerLev(userId);
-        return medCustomer;
+    public ReturnMsg<JSONArray> selectCustomerLev(HttpServletRequest request){
+        return new ReturnMsg<>(medCustomerService.selectCustomerLev(GetCurrentUser.convertFormRequest(request).getId()));
     }
 
     @ResponseBody
     @PostMapping("/addMedCustomerSocreApply")
-    @ApiOperation(value = "申请订单积分", notes = "申请订单积分")
-    public ReturnMsg<MedSocreDomain> addMedCustomerSocreApply(@RequestBody MedOrderDomain medOrderDomain) {
+    @ApiOperation(value = "申请增加订单积分", notes = "申请增加订单积分")
+    public ReturnMsg<MedSocreDomain> addMedCustomerSocreApply(HttpServletRequest request, @RequestBody MedOrderDomain medOrderDomain) {
         try {
+            medOrderDomain.setCustomerId(GetCurrentUser.convertFormRequest(request).getId());
             return new ReturnMsg<>(0,medOrderService.addMedCustomerSocre(medOrderDomain),null);
         } catch (Exception e) {
             return new ReturnMsg<>(-1,null, e.getMessage());
         }
     }
+
+    @ResponseBody
+    @GetMapping("/getMedUnionCustomerList")
+    @ApiOperation(value = "获取加盟商列表", notes = "获取加盟商列表")
+    public ReturnMsg<List<MedCustomerDomain>> getMedUnionCustomerList() {
+        try {
+            return new ReturnMsg<>(0,medCustomerService.selectByUserType(1),null);
+        } catch (Exception e) {
+            return new ReturnMsg<>(-1,null, e.getMessage());
+        }
+    }
+
     @ResponseBody
     @PostMapping("/reduceMedCustomerSocreApply")
-    @ApiOperation(value = "申请扣减积分", notes = "申请扣减积分")
-    public ReturnMsg<MedSocreDomain> reduceMedCustomerSocreApply(@RequestBody MedOrderDomain medOrderDomain) {
+    @ApiOperation(value = "申请扣减积分-C端用户", notes = "申请扣减积分-C端用户")
+    public ReturnMsg<MedSocreDomain> reduceMedCustomerSocreApply(HttpServletRequest request,@RequestBody MedOrderDomain medOrderDomain) {
         try {
+            medOrderDomain.setCustomerId(GetCurrentUser.convertFormRequest(request).getId());
             return new ReturnMsg<>(0,medOrderService.reduceMedCustomerSocre(medOrderDomain),null);
         } catch (Exception e) {
             return new ReturnMsg<>(-1,null, e.getMessage());
@@ -147,13 +159,16 @@ public class MedCustomerApiController {
 
     @PutMapping("/reduceMedCustomerSocreConfirm")
     @ApiOperation(value = "确认加盟商抵扣申请信息", notes = "确认加盟商抵扣申请信息")
-    public ReturnMsg<MedOrderDomain> reduceMedCustomerSocreConfirm(@RequestParam(name = "orderId", required = true) Long orderId){
+    public ReturnMsg<MedOrderDomain> reduceMedCustomerSocreConfirm(HttpServletRequest request, @RequestParam(name = "orderId", required = true) Long orderId){
         try {
-            return new ReturnMsg<>(medOrderService.reduceMedCustomerSocreConfirm(orderId));
+            return new ReturnMsg<>(medOrderService.reduceMedCustomerSocreConfirm(orderId,GetCurrentUser.convertFormRequest(request).getId()));
         } catch (Exception e) {
             return new ReturnMsg<>(-1,null, e.getMessage());
         }
     }
+
+
+
 
     @RequestMapping(value = "/{qrContent}/{backgroundUrl}/{size}/{positionX}/{positionY}/get.png",method = RequestMethod.GET,produces = MediaType.IMAGE_JPEG_VALUE)
     @ApiOperation(value = "海报生成接口-输出图片.png")

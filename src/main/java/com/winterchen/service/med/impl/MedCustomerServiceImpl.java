@@ -1,5 +1,7 @@
 package com.winterchen.service.med.impl;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.winterchen.dao.MedCustomerDao;
@@ -12,9 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * Created by Administrator on 2017/8/16.
@@ -28,14 +28,42 @@ public class MedCustomerServiceImpl  extends ServiceImpl<MedCustomerDao, MedCust
     private MedSmsCodeDao medSmsCodeDao;
 
     @Override
-    public List<Map> selectCustomerLev(Long userId){
-        return medCustomerDao.selectCustomerLev(userId);
+    public JSONArray selectCustomerLev(Long userId){
+        List<Map<String, Object>> children = medCustomerDao.selectCustomerLev(userId);
+
+        Map parent = new HashMap();
+        parent.put("id",userId);
+        return treeMenuList(children,userId);
+    }
+
+    public static JSONArray treeMenuList(List<Map<String, Object>> menuList, Long parentId) {
+        JSONArray childMenu = new JSONArray();
+        for (Map<String, Object> object : menuList) {
+            JSONObject jsonMenu = new JSONObject(object);
+            Long id = jsonMenu.getLong("id");
+            Long pid = jsonMenu.getLong("parentId");
+            if (Objects.equals(parentId, pid)) {
+                JSONArray child = treeMenuList(menuList, id);
+                jsonMenu.put("branch", child);
+                childMenu.add(jsonMenu);
+            }
+        }
+        return childMenu;
     }
 
     @Override
     public List<MedCustomerDomain> selectByUserType(Integer userType){
-
-        return medCustomerDao.selectByUserType(userType);
+        List<MedCustomerDomain> result = medCustomerDao.selectByUserType(userType);
+        result.forEach(item->{item.setExtData(null);
+            item.setSocre(0.0f);
+            item.setChildLev(0);
+            item.setRootId(0L);
+            item.setProxyRatio(0.0f);
+            item.setParentId(0L);
+            item.setGrade(0);
+            item.setRatio(0.0f);
+        });
+        return result;
     }
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -107,7 +135,7 @@ public class MedCustomerServiceImpl  extends ServiceImpl<MedCustomerDao, MedCust
     @Override
     @Transactional(rollbackFor = Exception.class)
     public MedCustomerDomain medCustomerSet(MedCustomerDomain medCustomerDomain) throws Exception{
-        MedCustomerDomain exist = this.getOne(new QueryWrapper<MedCustomerDomain>().eq("user_name", medCustomerDomain.getUserName())
+        MedCustomerDomain exist = this.getOne(new QueryWrapper<MedCustomerDomain>().eq("id", medCustomerDomain.getId())
                 .eq("status", 1));
         if (Objects.isNull(exist)) {
             throw new Exception("用户不存在");

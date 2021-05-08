@@ -1,3 +1,4 @@
+
 drop table med_customer;
 CREATE TABLE `med_customer` (
   `id` bigint(11) NOT NULL AUTO_INCREMENT COMMENT 'id',
@@ -6,7 +7,7 @@ CREATE TABLE `med_customer` (
   `user_name` varchar(128) NOT NULL COMMENT '用户名',
   `status` tinyint(1) DEFAULT '1' COMMENT '状态 1-有效；0-无效',
   `grade` int(4) DEFAULT NULL COMMENT '等级',
-  `user_type` int(4) DEFAULT '0' COMMENT '用户类型 1-加盟商 0-普通用户',
+  `user_type` int(4) DEFAULT '0' COMMENT '用户类型 1-加盟商 0-普通用户  2-代理',
   `child_lev` int(4) DEFAULT '2' COMMENT '下辖级别 加盟商可能超过2 系统参数为准，可手动修改',
   `socre` float(8,2) NOT NULL DEFAULT '0.00' COMMENT '积分',
   `ratio` float(6,4) DEFAULT '0.0000' COMMENT '比率',
@@ -38,14 +39,15 @@ INSERT INTO `med_customer` VALUES ('12211', '1222', 'user12211', '000', '1',5,2,
 
 CREATE TABLE `med_order` (
   `id` bigint(11) NOT NULL AUTO_INCREMENT,
-  `customer_id` bigint(11) NOT NULL,
+  `customer_id` bigint(11) NOT NULL COMMENT '被抵扣用户id',
+  `target_id` bigint(11) NOT NULL COMMENT '抵扣目标用户id',
   `create_time` timestamp NULL DEFAULT NULL,
   `socre` float(8,2) NOT NULL,
-  `status` tinyint(1) DEFAULT '0' COMMENT '状态 0-申请；1-有效；2-无效',
+  `status` tinyint(1) NOT NULL DEFAULT '0' COMMENT '状态 0-申请；1-有效；2-无效',
   `remark` varchar(255) DEFAULT NULL COMMENT '备注',
   `order_name` varchar(255) DEFAULT NULL COMMENT '订单名',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `med_socre` (
   `id` bigint(11) NOT NULL AUTO_INCREMENT,

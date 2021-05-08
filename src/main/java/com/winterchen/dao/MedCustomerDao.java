@@ -11,7 +11,7 @@ import java.util.Map;
 public interface MedCustomerDao extends BaseMapper<MedCustomerDomain> {
 
 
-    List<Map> selectCustomerLev(Long userId);
+    List<Map<String, Object>> selectCustomerLev(Long userId);
 
     List<MedCustomerDomain> selectByUserType(Integer userType);
 }

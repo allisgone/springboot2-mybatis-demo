@@ -17,13 +17,13 @@ public interface MedOrderService extends IService<MedOrderDomain> {
 
     MedSocreDomain reduceMedCustomerSocre(MedOrderDomain medOrderDomain) throws Exception;
 
-    MedOrderDomain reduceMedCustomerSocreConfirm(Long orderId) throws Exception;
+    MedOrderDomain reduceMedCustomerSocreConfirm(Long orderId,Long targetId) throws Exception;
 
-    boolean rejectMedCustomerSocre(Long orderId) throws Exception;
+    MedOrderDomain rejectMedCustomerSocre(Long orderId,Long targetId) throws Exception;
 
     float medCustomerScore(String userName) throws Exception;
 
-    IPage<MedSocreDomain> medCustomerScoreList(String userName,String type, int page, int limit) throws Exception;
+    IPage<MedOrderDomain> medCustomerOrderPageList(String userName,String type, int page, int limit) throws Exception;
 
     MedOrderDomain getByOrderId(Long id);
 }

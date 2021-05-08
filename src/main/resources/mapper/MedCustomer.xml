@@ -21,16 +21,16 @@
     </resultMap>
 
     <select id="selectCustomerLev" parameterType="Long" resultType="java.util.Map">
-        select id,ischild,grade,lev from (
-            select t1.id,if(find_in_set(parent_id, @pids) > 0, @pids := concat(@pids, ',', id), 0) as ischild,
+        select id,parent_id as parentId,user_name as userName,user_type as userType,ischild,grade,lev from (
+            select t1.id,t1.parent_id,t1.user_name,t1.user_type,if(find_in_set(parent_id, @pids) > 0, @pids := concat(@pids, ',', id), 0) as ischild,
             grade, grade-@root_grade as lev
-            from (select id,parent_id,grade from <include refid="BASE_TABLE"/> t where t.status = 1 order by parent_id, id) t1,
+            from (select id,t.parent_id,t.user_name,t.grade,t.user_type from <include refid="BASE_TABLE"/> t where t.status = 1 order by parent_id, id) t1,
             (select @pids := #{0}) as t2,
             (select @root_grade :=grade from <include refid="BASE_TABLE"/> where id=@pids) as t3
         ) t4  where ischild != '0'
     </select>
 
     <select id="selectByUserType" parameterType="Integer"  resultMap="medCustomerDomainMap">
-        select * from <include refid="BASE_TABLE"/> where user_type = #{0}
+        select * from <include refid="BASE_TABLE"/> where user_type = #{0} and status = 1
     </select>
 </mapper>

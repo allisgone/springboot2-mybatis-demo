@@ -34,12 +34,13 @@ public class MedSmsCodeServiceImpl extends ServiceImpl<MedSmsCodeDao, MedSmsCode
     //产品域名,开发者无需替换
     private static final String domain = "dysmsapi.aliyuncs.com";
 
-    private static final String sign = "阳光会员";
+    private static final String sign = "美丽天使";
     // 开发者akID
-    private static final String accessKeyId = "";
+    private static final String accessKeyId = "LTAI5t6o3z9fsVCzG46f5GPA";
 
     //开发者ak秘钥
-    private static final String accessKeySecret = "";
+    private static final String accessKeySecret = "Khgv8sDaRJSq6KcjrHu7cLBHCPOvTC";
+
     /**
      * 发送短信
      *
@@ -59,12 +60,12 @@ public class MedSmsCodeServiceImpl extends ServiceImpl<MedSmsCodeDao, MedSmsCode
         }else{
             medSmsCodeDomain = new MedSmsCodeDomain();
         }
-        //注册SMS_205700298  登录 SMS_205700300
+        //注册SMS_216427788 登录 SMS_216277733
         String template;
         if(1 == sendType){
-            template = "SMS_205700300";
+            template = "SMS_216277733";
         }else{
-            template = "SMS_205700298";
+            template = "SMS_216427788";
         }
         //生成六位随机数字短信验证码
         String verifyCode = String.valueOf(new Random().nextInt(899999) + 100000);

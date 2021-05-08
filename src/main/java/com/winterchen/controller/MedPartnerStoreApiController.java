@@ -1,5 +1,6 @@
 package com.winterchen.controller;
 
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.winterchen.model.MedCustomerDomain;
@@ -7,11 +8,13 @@ import com.winterchen.model.MedPartnerStoreDomain;
 import com.winterchen.model.ReturnMsg;
 import com.winterchen.service.med.MedCustomerService;
 import com.winterchen.service.med.MedPartnerStoreService;
+import com.winterchen.utils.GetCurrentUser;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.sql.Timestamp;
 import java.util.Objects;
 
@@ -32,10 +35,11 @@ public class MedPartnerStoreApiController {
     @ResponseBody
     @PostMapping(value = "/saveStore")
     @ApiOperation(value = "保存店铺信息", notes = "保存店铺信息")
-    public ReturnMsg<MedPartnerStoreDomain> saveStore(@RequestBody MedPartnerStoreDomain medPartnerStoreDomain) {
+    public ReturnMsg<MedPartnerStoreDomain> saveStore(HttpServletRequest request,@RequestBody MedPartnerStoreDomain medPartnerStoreDomain) {
         if (medPartnerStoreDomain == null) {
             return new ReturnMsg<>(-1,null,"数据为空");
         }
+        medPartnerStoreDomain.setCustomerId(GetCurrentUser.convertFormRequest(request).getId());
         MedCustomerDomain exist = medCustomerService.getOne(new QueryWrapper<MedCustomerDomain>().eq("id", medPartnerStoreDomain.getCustomerId())
                 .eq("status", 1)
         .eq("user_type",1));
@@ -51,16 +55,16 @@ public class MedPartnerStoreApiController {
 
     @ResponseBody
     @GetMapping("/getStore")
-    @ApiOperation(value = "加盟商店铺信息", notes = "加盟商店铺信息")
+    @ApiOperation(value = "加盟商店铺信息-用于B端查看", notes = "加盟商店铺信息-用于C端查看")
     public ReturnMsg<MedPartnerStoreDomain> getStore(@RequestParam(name = "id") Long id){
         return new ReturnMsg<>(medPartnerStoreService.getById(id));
     }
 
     @ResponseBody
     @GetMapping("/getStoreByCustomId")
-    @ApiOperation(value = "加盟商店铺信息", notes = "加盟商店铺信息")
-    public ReturnMsg<MedPartnerStoreDomain> getStoreByCustomId(@RequestParam(name = "customerId") Long customerId){
-        return new ReturnMsg<>(medPartnerStoreService.getOne(new QueryWrapper<MedPartnerStoreDomain>().eq("customer_id", customerId)));
+    @ApiOperation(value = "加盟商店铺信息-用于B端查看", notes = "加盟商店铺信息-用于B端查看")
+    public ReturnMsg<MedPartnerStoreDomain> getStoreByCustomId(HttpServletRequest request){
+        return new ReturnMsg<>(medPartnerStoreService.getOne(new QueryWrapper<MedPartnerStoreDomain>().eq("customer_id", GetCurrentUser.convertFormRequest(request).getId())));
     }
 
     @GetMapping("/medPartnerStoreList")

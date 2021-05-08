@@ -15,6 +15,6 @@
     </resultMap>
 
     <select id="sumCustomerSocre" parameterType="Long"  resultType="float">
-        select IFNULL(sum(socre),0) as total from <include refid="BASE_TABLE"/> where customer_id = #{0} and status = 1
+        select IFNULL(sum(socre),0) as total from med_socre where customer_id = #{0} and status = 1
     </select>
 </mapper>
