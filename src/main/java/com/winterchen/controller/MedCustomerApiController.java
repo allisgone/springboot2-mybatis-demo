@@ -1,6 +1,7 @@
 package com.winterchen.controller;
 
 import com.alibaba.fastjson.JSONArray;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.winterchen.model.*;
 import com.winterchen.service.med.MedCustomerService;

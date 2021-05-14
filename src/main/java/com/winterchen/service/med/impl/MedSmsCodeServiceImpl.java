@@ -34,7 +34,7 @@ public class MedSmsCodeServiceImpl extends ServiceImpl<MedSmsCodeDao, MedSmsCode
     //产品域名,开发者无需替换
     private static final String domain = "dysmsapi.aliyuncs.com";
 
-    private static final String sign = "美丽天使";
+    private static final String sign = "蜕变成蝶";
     // 开发者akID
     private static final String accessKeyId = "LTAI5t6o3z9fsVCzG46f5GPA";
 
