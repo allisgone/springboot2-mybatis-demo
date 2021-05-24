@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.winterchen.config.RatioConfig;
 import com.winterchen.dao.MedCustomerDao;
 import com.winterchen.dao.MedSmsCodeDao;
 import com.winterchen.model.MedCustomerDomain;
@@ -26,6 +27,8 @@ public class MedCustomerServiceImpl  extends ServiceImpl<MedCustomerDao, MedCust
     private MedCustomerDao medCustomerDao;
     @Autowired
     private MedSmsCodeDao medSmsCodeDao;
+    @Autowired
+    private RatioConfig ratioConfig;
 
     @Override
     public JSONArray selectCustomerLev(Long userId){
@@ -61,7 +64,8 @@ public class MedCustomerServiceImpl  extends ServiceImpl<MedCustomerDao, MedCust
             item.setProxyRatio(0.0f);
             item.setParentId(0L);
             item.setGrade(0);
-            item.setRatio(0.0f);
+            item.setLevel1Ratio(0.0f);
+            item.setLevel2Ratio(0.0f);
         });
         return result;
     }
@@ -77,7 +81,7 @@ public class MedCustomerServiceImpl  extends ServiceImpl<MedCustomerDao, MedCust
             throw new Exception("短信验证码不正确，请重新发送");
         }
         MedCustomerDomain parent = this.getOne(new QueryWrapper<MedCustomerDomain>().eq("id",medCustomerDomain.getParentId()).eq("status", 1));
-        if(Objects.isNull(parent)){
+        if(Objects.isNull(parent)) {
             throw new Exception("未找到父级信息");
         }
         MedCustomerDomain exist = this.getOne(new QueryWrapper<MedCustomerDomain>().eq("user_name", medCustomerDomain.getUserName()));
@@ -91,6 +95,8 @@ public class MedCustomerServiceImpl  extends ServiceImpl<MedCustomerDao, MedCust
         if(medCustomerDomain.getUserType() == 1){
             //设置为根节点id
             medCustomerDomain.setRootId(1L);
+            medCustomerDomain.setChildLev(ratioConfig.getPartnerChildLev());
+            medCustomerDomain.setProxyRatio(ratioConfig.getProxyRatio());
         }else{
             //自己是普通用户，上一级为加盟商
             if(parent.getUserType() == 1){
@@ -104,6 +110,9 @@ public class MedCustomerServiceImpl  extends ServiceImpl<MedCustomerDao, MedCust
             //普通用户下级写死为2
             medCustomerDomain.setChildLev(2);
         }
+        //设置一级和二级分佣比例
+        medCustomerDomain.setLevel1Ratio(ratioConfig.getLevel1Ratio());
+        medCustomerDomain.setLevel2Ratio(ratioConfig.getLevel2Ratio());
         medCustomerDomain.setCreateTime(new Timestamp(System.currentTimeMillis()));
         this.save(medCustomerDomain);
         //清除短信验证码

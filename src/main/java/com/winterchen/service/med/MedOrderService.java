@@ -11,7 +11,7 @@ import com.winterchen.model.MedSocreDomain;
  */
 public interface MedOrderService extends IService<MedOrderDomain> {
 
-    MedSocreDomain addMedCustomerSocre(MedOrderDomain medOrderDomain) throws Exception;
+    MedOrderDomain addMedCustomerSocre(MedOrderDomain medOrderDomain) throws Exception;
 
     boolean agreeMedCustomerSocre(Long orderId) throws Exception;
 

@@ -14,7 +14,8 @@
         <result property="userType" column="user_type"/>
         <result property="childLev" column="child_lev"/>
         <result property="socre" column="socre"/>
-        <result property="ratio" column="ratio"/>
+        <result property="level1Ratio" column="level1_ratio"/>
+        <result property="level2Ratio" column="level2_ratio"/>
         <result property="proxyRatio" column="proxy_ratio"/>
         <result property="createTime" column="create_time"/>
         <result property="extData" column="ext_data"/>

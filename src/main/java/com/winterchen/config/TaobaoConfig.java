@@ -22,9 +22,6 @@ public class TaobaoConfig {
     private Tbk tbk = new Tbk();
     private Baichuan baichuan = new Baichuan();
 
-    public static void main(String[] args) {
-
-    }
     @Data
     public class Tbk{
         private String appkey;

@@ -84,6 +84,19 @@ public class MedCustomerApiController {
         }
     }
 
+    @GetMapping("/selectCustomerRatio")
+    @ApiOperation(value = "用户佣金比例查询", notes = "用户佣金比例查询")
+    public ReturnMsg<MedCustomerDomain> selectCustomerRatio(@RequestParam(name = "id") Long id) {
+        try {
+            MedCustomerDomain result = medCustomerService.getById(id);
+            result.setExtData(null);
+            result.setRootId(null);
+            return new ReturnMsg<>(result);
+        } catch (Exception e) {
+            return new ReturnMsg<>(-1,null, e.getMessage());
+        }
+    }
+
     @ResponseBody
     @PostMapping("/medCustomerSet")
     @ApiOperation(value = "用户设置", notes = "用户设置")
@@ -92,6 +105,34 @@ public class MedCustomerApiController {
         try {
             medCustomerDomain.setId(GetCurrentUser.convertFormRequest(request).getId());
             return new ReturnMsg<>(medCustomerService.medCustomerSet(medCustomerDomain));
+        } catch (Exception e) {
+            return new ReturnMsg<>(-1,null, e.getMessage());
+        }
+    }
+
+    @ResponseBody
+    @PostMapping("/medCustomerOtherSet")
+    @ApiOperation(value = "用户其他设置", notes = "用户其他设置")
+    public ReturnMsg<MedCustomerDomain> medCustomerOtherSet(HttpServletRequest request, @RequestBody MedCustomerDomain medCustomerDomain) {
+        if(1L != GetCurrentUser.convertFormRequest(request).getId().longValue()){
+            return new ReturnMsg<>(-1,null, "没有权限");
+        }
+        try {
+            MedCustomerDomain find = medCustomerService.getById(medCustomerDomain.getId());
+            if(Objects.isNull(find)){
+                return new ReturnMsg<>(-1,null, "未找到用户");
+            }
+            find.setProxyRatio(medCustomerDomain.getProxyRatio());
+            find.setLevel1Ratio(medCustomerDomain.getLevel1Ratio());
+            find.setLevel2Ratio(medCustomerDomain.getLevel2Ratio());
+            find.setChildLev(medCustomerDomain.getChildLev());
+            //设置用户状态
+            //find.setStatus();
+            if(medCustomerService.updateById(find)) {
+                return new ReturnMsg<>(find);
+            }else{
+                return new ReturnMsg<>(-1,null, "更新数据失败");
+            }
         } catch (Exception e) {
             return new ReturnMsg<>(-1,null, e.getMessage());
         }
@@ -120,7 +161,7 @@ public class MedCustomerApiController {
     @ResponseBody
     @PostMapping("/addMedCustomerSocreApply")
     @ApiOperation(value = "申请增加订单积分", notes = "申请增加订单积分")
-    public ReturnMsg<MedSocreDomain> addMedCustomerSocreApply(HttpServletRequest request, @RequestBody MedOrderDomain medOrderDomain) {
+    public ReturnMsg<MedOrderDomain> addMedCustomerSocreApply(HttpServletRequest request, @RequestBody MedOrderDomain medOrderDomain) {
         try {
             medOrderDomain.setCustomerId(GetCurrentUser.convertFormRequest(request).getId());
             return new ReturnMsg<>(0,medOrderService.addMedCustomerSocre(medOrderDomain),null);

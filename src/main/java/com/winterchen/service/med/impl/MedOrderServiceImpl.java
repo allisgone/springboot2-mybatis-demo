@@ -36,7 +36,7 @@ public class MedOrderServiceImpl extends ServiceImpl<MedOrderDao, MedOrderDomain
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public MedSocreDomain addMedCustomerSocre(MedOrderDomain medOrderDomain) throws Exception {
+    public MedOrderDomain addMedCustomerSocre(MedOrderDomain medOrderDomain) throws Exception {
         MedCustomerDomain currentUser = medCustomerDao.selectOne(new QueryWrapper<MedCustomerDomain>()
                 .eq("id",medOrderDomain.getCustomerId()).eq("status", 1));
         if(Objects.isNull(currentUser)){
@@ -48,38 +48,10 @@ public class MedOrderServiceImpl extends ServiceImpl<MedOrderDao, MedOrderDomain
         medOrderDomain.setCreateTime(current);
         medOrderDao.insert(medOrderDomain);
 
-        MedSocreDomain medSocreDomain = new MedSocreDomain();
-        //todo 可能这订单金额按照比率来搞分佣
-        medSocreDomain.setSocre(medOrderDomain.getSocre());
-        medSocreDomain.setCreateTime(current);
-        medSocreDomain.setCustomerId(medOrderDomain.getCustomerId());
-        medSocreDomain.setStatus(0);
-        medSocreDomain.setOrderId(medOrderDomain.getId());
-        medSocreDomain.setRemark("订单返佣");
-        medSocreDao.insert(medSocreDomain);
-
-        //todo 设置为系统参数
-        int loopTimes = 3;
         //设置关联的等级分成
-        this.setParentSocre(medOrderDomain.getId(),medOrderDomain.getSocre(),currentUser.getParentId(),loopTimes);
-        //设置代理人分成
-        MedCustomerDomain root = medCustomerDao.selectOne(new QueryWrapper<MedCustomerDomain>().
-                eq("id",currentUser.getRootId()).eq("user_type", 1)
-                .eq("status", 1));
-        if(Objects.nonNull(root)){
-            if(currentUser.getGrade() <= root.getChildLev()) {
-                MedSocreDomain rootMedSocreDomain = new MedSocreDomain();
-                //代理商分佣
-                rootMedSocreDomain.setSocre(root.getProxyRatio() * medOrderDomain.getSocre());
-                rootMedSocreDomain.setCreateTime(current);
-                rootMedSocreDomain.setCustomerId(root.getId());
-                rootMedSocreDomain.setRemark("代理商分成");
-                rootMedSocreDomain.setStatus(0);
-                rootMedSocreDomain.setOrderId(medOrderDomain.getId());
-                medSocreDao.insert(rootMedSocreDomain);
-            }
-        }
-        return medSocreDomain;
+        this.setParentSocre(medOrderDomain.getId(),medOrderDomain.getSocre(),currentUser.getParentId());
+
+        return medOrderDomain;
     }
 
     @Override
@@ -217,17 +189,26 @@ public class MedOrderServiceImpl extends ServiceImpl<MedOrderDao, MedOrderDomain
         return exist;
     }
 
-    private void setParentSocre(Long orderId,float socre,Long parentId,int loopTimes){
-        if(loopTimes <= 0){
+    /**
+     * 递归出上级所得佣金
+     */
+    /*private void setParentSocre(Long orderId,float socre,Long parentId,int loopTimes) {
+        if (loopTimes <= 0) {
             return;
         }
         //上级
         MedCustomerDomain parent = medCustomerDao.selectById(parentId);
-        if(Objects.isNull(parent)){
-            return ;
+        if (Objects.isNull(parent)) {
+            return;
         }
         //上级分佣
-        socre *= parent.getRatio();
+        //1-加盟商 0-普通用户 2-代理'
+        if (parent.getUserType() > 0) {
+            socre *= parent.getProxyRatio();
+        }else{
+            socre *= parent.getRatio();
+        }
+
         //只有是有效用户才给分佣 否则不分佣并且继续到上级分佣
         if(parent.isStatus()) {
             MedSocreDomain parentMedSocreDomain = new MedSocreDomain();
@@ -241,7 +222,56 @@ public class MedOrderServiceImpl extends ServiceImpl<MedOrderDao, MedOrderDomain
         }
         //递归调用设置上级佣金
         this.setParentSocre(orderId, socre, parent.getParentId(),loopTimes--);
+    }*/
+    private void setParentSocre(Long orderId,float score,Long customerId){
+        //自己
+        MedCustomerDomain currentUser = medCustomerDao.selectById(customerId);
+        if (Objects.isNull(currentUser)) {
+            return;
+        }
+        //上级
+        MedCustomerDomain parentUser = medCustomerDao.selectById(currentUser.getParentId());
+        if (Objects.isNull(parentUser)) {
+            return;
+        }
+        if(currentUser.getGrade() < 3){
+            //低于三级，直接全部分佣到上一级
+            this.saveScore((parentUser.getLevel1Ratio() + parentUser.getLevel2Ratio()) * score,parentUser.getId(),orderId,"下级消费");
+        }else{
+            //三级以上，两级分佣
+            this.saveScore(parentUser.getLevel1Ratio() * score,parentUser.getId(),orderId,"下级消费");
+            MedCustomerDomain parent2User = medCustomerDao.selectById(parentUser.getParentId());
+            this.saveScore(parentUser.getLevel2Ratio() * score,parent2User.getId(),orderId,"下级消费");
+        }
+        //设置代理人分成
+        MedCustomerDomain root = medCustomerDao.selectOne(new QueryWrapper<MedCustomerDomain>().
+                eq("id",currentUser.getRootId()).gt("user_type", 0)
+                .eq("status", 1));
+        //代理商或者加盟商分佣
+        if(currentUser.getGrade() <= root.getChildLev()) {
+            this.saveScore(root.getProxyRatio() * score,root.getId(),orderId,"代理商分成");
+            //是加盟商的情况,可能上面还有代理商
+            if(root.getUserType() == 1){
+                MedCustomerDomain parentRoot = medCustomerDao.selectOne(new QueryWrapper<MedCustomerDomain>().
+                        eq("id",root.getRootId()).gt("user_type", 0)
+                        .eq("status", 1));
+                this.saveScore(root.getProxyRatio() * score,parentRoot.getId(),orderId,"代理商分成");
+            }
+
+        }
     }
+
+    private void saveScore(float socre,Long customerId,Long orderId,String remark){
+        MedSocreDomain parentMedSocreDomain = new MedSocreDomain();
+        parentMedSocreDomain.setSocre(socre);
+        parentMedSocreDomain.setCreateTime(new Timestamp(System.currentTimeMillis()));
+        parentMedSocreDomain.setCustomerId(customerId);
+        parentMedSocreDomain.setRemark(remark);
+        parentMedSocreDomain.setStatus(0);
+        parentMedSocreDomain.setOrderId(orderId);
+        medSocreDao.insert(parentMedSocreDomain);
+    }
+
 
 
     @Override

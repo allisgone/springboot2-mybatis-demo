@@ -33,7 +33,9 @@ public class MedCustomerDomain {
 
     private float socre;
 
-    private float ratio;
+    private float level1Ratio;
+
+    private float level2Ratio;
 
     private float proxyRatio;
 
