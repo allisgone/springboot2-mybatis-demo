@@ -9,7 +9,6 @@ import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * Created by Administrator on 2017/8/16.
@@ -36,9 +35,9 @@ public class MedAdminApiController {
 
     @PutMapping("/rejectMedCustomerSocre")
     @ApiOperation(value = "拒绝抵扣申请信息", notes = "拒绝抵扣申请信息")
-    public ReturnMsg<MedOrderDomain> rejectMedCustomerSocre(HttpServletRequest request, @RequestParam(name = "orderId", required = true) Long orderId){
+    public ReturnMsg<MedOrderDomain> rejectMedCustomerSocre(@RequestParam(name = "orderId", required = true) Long orderId){
         try {
-            return new ReturnMsg<>(medOrderService.rejectMedCustomerSocre(orderId, GetCurrentUser.convertFormRequest(request).getId()));
+            return new ReturnMsg<>(medOrderService.rejectMedCustomerSocre(orderId, GetCurrentUser.convertFormRequest().getId()));
         } catch (Exception e) {
             return new ReturnMsg<>(-1,null, e.getMessage());
         }

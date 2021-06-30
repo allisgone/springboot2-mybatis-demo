@@ -35,11 +35,11 @@ public class MedPartnerStoreApiController {
     @ResponseBody
     @PostMapping(value = "/saveStore")
     @ApiOperation(value = "保存店铺信息", notes = "保存店铺信息")
-    public ReturnMsg<MedPartnerStoreDomain> saveStore(HttpServletRequest request,@RequestBody MedPartnerStoreDomain medPartnerStoreDomain) {
+    public ReturnMsg<MedPartnerStoreDomain> saveStore(@RequestBody MedPartnerStoreDomain medPartnerStoreDomain) {
         if (medPartnerStoreDomain == null) {
             return new ReturnMsg<>(-1,null,"数据为空");
         }
-        medPartnerStoreDomain.setCustomerId(GetCurrentUser.convertFormRequest(request).getId());
+        medPartnerStoreDomain.setCustomerId(GetCurrentUser.convertFormRequest().getId());
         MedCustomerDomain exist = medCustomerService.getOne(new QueryWrapper<MedCustomerDomain>().eq("id", medPartnerStoreDomain.getCustomerId())
                 .eq("status", 1)
         .eq("user_type",1));
@@ -63,8 +63,8 @@ public class MedPartnerStoreApiController {
     @ResponseBody
     @GetMapping("/getStoreByCustomId")
     @ApiOperation(value = "加盟商店铺信息-用于B端查看", notes = "加盟商店铺信息-用于B端查看")
-    public ReturnMsg<MedPartnerStoreDomain> getStoreByCustomId(HttpServletRequest request){
-        return new ReturnMsg<>(medPartnerStoreService.getOne(new QueryWrapper<MedPartnerStoreDomain>().eq("customer_id", GetCurrentUser.convertFormRequest(request).getId())));
+    public ReturnMsg<MedPartnerStoreDomain> getStoreByCustomId(){
+        return new ReturnMsg<>(medPartnerStoreService.getOne(new QueryWrapper<MedPartnerStoreDomain>().eq("customer_id", GetCurrentUser.convertFormRequest().getId())));
     }
 
     @GetMapping("/medPartnerStoreList")

@@ -76,9 +76,9 @@ public class MedCustomerApiController {
 
     @GetMapping("/medCustomerScore")
     @ApiOperation(value = "用户总积分查询", notes = "用户总积分查询")
-    public ReturnMsg<Float> medCustomerScore(HttpServletRequest request) {
+    public ReturnMsg<Float> medCustomerScore() {
         try {
-            return new ReturnMsg<>(medOrderService.medCustomerScore(GetCurrentUser.convertFormRequest(request).getUserName()));
+            return new ReturnMsg<>(medOrderService.medCustomerScore(GetCurrentUser.convertFormRequest().getUserName()));
         } catch (Exception e) {
             return new ReturnMsg<>(-1,null, e.getMessage());
         }
@@ -100,10 +100,10 @@ public class MedCustomerApiController {
     @ResponseBody
     @PostMapping("/medCustomerSet")
     @ApiOperation(value = "用户设置", notes = "用户设置")
-    public ReturnMsg<MedCustomerDomain> medCustomerSet(HttpServletRequest request, @RequestBody MedCustomerDomain medCustomerDomain) {
+    public ReturnMsg<MedCustomerDomain> medCustomerSet( @RequestBody MedCustomerDomain medCustomerDomain) {
 
         try {
-            medCustomerDomain.setId(GetCurrentUser.convertFormRequest(request).getId());
+            medCustomerDomain.setId(GetCurrentUser.convertFormRequest().getId());
             return new ReturnMsg<>(medCustomerService.medCustomerSet(medCustomerDomain));
         } catch (Exception e) {
             return new ReturnMsg<>(-1,null, e.getMessage());
@@ -113,8 +113,8 @@ public class MedCustomerApiController {
     @ResponseBody
     @PostMapping("/medCustomerOtherSet")
     @ApiOperation(value = "用户其他设置", notes = "用户其他设置")
-    public ReturnMsg<MedCustomerDomain> medCustomerOtherSet(HttpServletRequest request, @RequestBody MedCustomerDomain medCustomerDomain) {
-        if(1L != GetCurrentUser.convertFormRequest(request).getId().longValue()){
+    public ReturnMsg<MedCustomerDomain> medCustomerOtherSet(@RequestBody MedCustomerDomain medCustomerDomain) {
+        if(1L != GetCurrentUser.convertFormRequest().getId().longValue()){
             return new ReturnMsg<>(-1,null, "没有权限");
         }
         try {
@@ -140,11 +140,11 @@ public class MedCustomerApiController {
 
     @GetMapping("/medCustomerOrderPageList")
     @ApiOperation(value = "用户积分订单列表查询", notes = "用户积分订单列表查询")
-    public ReturnMsg<IPage<MedOrderDomain>> medCustomerOrderPageList(HttpServletRequest request,@RequestParam(name = "type") String type,
+    public ReturnMsg<IPage<MedOrderDomain>> medCustomerOrderPageList(@RequestParam(name = "type") String type,
                                                                  @RequestParam(name = "page") int page,
                                                                  @RequestParam(name = "limit") int limit){
         try {
-            return new ReturnMsg<>(medOrderService.medCustomerOrderPageList(GetCurrentUser.convertFormRequest(request).getUserName(),type,page,limit));
+            return new ReturnMsg<>(medOrderService.medCustomerOrderPageList(GetCurrentUser.convertFormRequest().getUserName(),type,page,limit));
         } catch (Exception e) {
             return new ReturnMsg<>(-1,null, e.getMessage());
         }
@@ -154,16 +154,16 @@ public class MedCustomerApiController {
     @ResponseBody
     @GetMapping("/selectCustomerLev")
     @ApiOperation(value = "依据id获取下面的等级信息", notes = "依据id获取下面的等级信息")
-    public ReturnMsg<JSONArray> selectCustomerLev(HttpServletRequest request){
-        return new ReturnMsg<>(medCustomerService.selectCustomerLev(GetCurrentUser.convertFormRequest(request).getId()));
+    public ReturnMsg<JSONArray> selectCustomerLev(){
+        return new ReturnMsg<>(medCustomerService.selectCustomerLev(GetCurrentUser.convertFormRequest().getId()));
     }
 
     @ResponseBody
     @PostMapping("/addMedCustomerSocreApply")
     @ApiOperation(value = "申请增加订单积分", notes = "申请增加订单积分")
-    public ReturnMsg<MedOrderDomain> addMedCustomerSocreApply(HttpServletRequest request, @RequestBody MedOrderDomain medOrderDomain) {
+    public ReturnMsg<MedOrderDomain> addMedCustomerSocreApply(@RequestBody MedOrderDomain medOrderDomain) {
         try {
-            medOrderDomain.setCustomerId(GetCurrentUser.convertFormRequest(request).getId());
+            medOrderDomain.setCustomerId(GetCurrentUser.convertFormRequest().getId());
             return new ReturnMsg<>(0,medOrderService.addMedCustomerSocre(medOrderDomain),null);
         } catch (Exception e) {
             return new ReturnMsg<>(-1,null, e.getMessage());
@@ -184,9 +184,9 @@ public class MedCustomerApiController {
     @ResponseBody
     @PostMapping("/reduceMedCustomerSocreApply")
     @ApiOperation(value = "申请扣减积分-C端用户", notes = "申请扣减积分-C端用户")
-    public ReturnMsg<MedSocreDomain> reduceMedCustomerSocreApply(HttpServletRequest request,@RequestBody MedOrderDomain medOrderDomain) {
+    public ReturnMsg<MedSocreDomain> reduceMedCustomerSocreApply(@RequestBody MedOrderDomain medOrderDomain) {
         try {
-            medOrderDomain.setCustomerId(GetCurrentUser.convertFormRequest(request).getId());
+            medOrderDomain.setCustomerId(GetCurrentUser.convertFormRequest().getId());
             return new ReturnMsg<>(0,medOrderService.reduceMedCustomerSocre(medOrderDomain),null);
         } catch (Exception e) {
             return new ReturnMsg<>(-1,null, e.getMessage());
@@ -201,9 +201,9 @@ public class MedCustomerApiController {
 
     @PutMapping("/reduceMedCustomerSocreConfirm")
     @ApiOperation(value = "确认加盟商抵扣申请信息", notes = "确认加盟商抵扣申请信息")
-    public ReturnMsg<MedOrderDomain> reduceMedCustomerSocreConfirm(HttpServletRequest request, @RequestParam(name = "orderId", required = true) Long orderId){
+    public ReturnMsg<MedOrderDomain> reduceMedCustomerSocreConfirm(@RequestParam(name = "orderId", required = true) Long orderId){
         try {
-            return new ReturnMsg<>(medOrderService.reduceMedCustomerSocreConfirm(orderId,GetCurrentUser.convertFormRequest(request).getId()));
+            return new ReturnMsg<>(medOrderService.reduceMedCustomerSocreConfirm(orderId,GetCurrentUser.convertFormRequest().getId()));
         } catch (Exception e) {
             return new ReturnMsg<>(-1,null, e.getMessage());
         }
