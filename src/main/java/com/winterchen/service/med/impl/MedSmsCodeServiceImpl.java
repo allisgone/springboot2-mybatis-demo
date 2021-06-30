@@ -116,13 +116,13 @@ public class MedSmsCodeServiceImpl extends ServiceImpl<MedSmsCodeDao, MedSmsCode
 
         //初始化acsClient,暂不支持region化
         IClientProfile profile = DefaultProfile.getProfile("cn-hangzhou", accessKeyId, accessKeySecret);
-        DefaultProfile.addEndpoint("cn-hangzhou", "cn-hangzhou", product, domain);
+        DefaultProfile.addEndpoint("cn-hangzhou", product, domain);
         IAcsClient acsClient = new DefaultAcsClient(profile);
 
         //组装请求对象-具体描述见控制台-文档部分内容
 
         //使用post提交
-        request.setMethod(MethodType.POST);
+        request.setSysMethod(MethodType.POST);
 
         //选填-上行短信扩展码(无特殊需求用户请忽略此字段)
         //request.setSmsUpExtendCode("90997");
